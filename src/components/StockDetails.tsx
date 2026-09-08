@@ -9,7 +9,7 @@ export function StockDetails() {
   const selected = store.selectedStock.value;
 
   return (
-    <section class="h-full min-w-0 flex-1 overflow-hidden bg-zinc-100">
+    <section class="h-full min-w-0 flex-1 overflow-hidden bg-zinc-950 text-zinc-100">
       {count === 0 ? <Instructions multi={false} /> : null}
       {count > 1 ? <Instructions multi={true} /> : null}
       {count === 1 && selected && store.viewMode.value === "chart" ? (

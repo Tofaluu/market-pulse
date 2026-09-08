@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+﻿import { useEffect } from "preact/hooks";
 import { StockDetails } from "./components/StockDetails";
 import { StatusBar } from "./components/StatusBar";
 import { StockList } from "./components/StockList";
@@ -9,6 +9,14 @@ export function App() {
   useEffect(() => {
     // Global keyboard shortcuts mirror toolbar actions.
     const handler = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing inside search inputs
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
       if (event.altKey || event.ctrlKey || event.metaKey) return;
 
       const key = event.key.toLowerCase();
@@ -20,11 +28,14 @@ export function App() {
     };
 
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      store.stopSimulation();
+    };
   }, []);
 
   return (
-    <main class="flex h-screen w-screen flex-col bg-zinc-100 text-zinc-900">
+    <main class="flex h-screen w-screen flex-col bg-zinc-950 text-zinc-100 antialiased select-none">
       <Toolbar
         onAdd={() => store.addRandomStock()}
         onDelete={() => store.deleteSelectedStocks()}
