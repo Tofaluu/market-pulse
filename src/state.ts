@@ -10,6 +10,25 @@ export type ViewMode = "chart" | "list" | "ai";
 export type Timeframe = "1D" | "1Y" | "5Y" | "ALL";
 export type ChartMetric = "price" | "mcap";
 
+/**
+ * Checks if North American equity markets (NYSE, NASDAQ, TSX) are currently open.
+ * Regular hours: Mon–Fri 9:30 AM – 4:00 PM Eastern Time.
+ */
+export function isMarketOpen(): boolean {
+  try {
+    const etString = new Date().toLocaleString("en-US", {
+      timeZone: "America/New_York",
+    });
+    const etDate = new Date(etString);
+    const day = etDate.getDay(); // 0 = Sun, 6 = Sat
+    if (day === 0 || day === 6) return false;
+    const minutes = etDate.getHours() * 60 + etDate.getMinutes();
+    return minutes >= 570 && minutes < 960; // 9:30 AM to 4:00 PM ET
+  } catch {
+    return false;
+  }
+}
+
 class StockStore {
   // Initialize with initial top 6 stocks for immediate rich visualization
   stocks = signal<Stock[]>(stockRecords.slice(0, 6).map((s) => ({ ...s })));
@@ -18,10 +37,13 @@ class StockStore {
   chartTimeframe = signal<Timeframe>("1D");
   chartMetric = signal<ChartMetric>("price");
 
-  // Real-time market streaming simulation state
-  isLive = signal<boolean>(true);
+  // Real-time market streaming simulation state (only active when market is open or manually enabled)
+  isMarketOpen = signal<boolean>(isMarketOpen());
+  isLive = signal<boolean>(isMarketOpen());
   simulationSpeed = signal<number>(2000);
-  lastMarketUpdate = signal<string>(new Date().toLocaleTimeString());
+  lastMarketUpdate = signal<string>(
+    isMarketOpen() ? new Date().toLocaleTimeString() : "4:00 PM ET (Market Close)"
+  );
   searchQuery = signal<string>("");
 
   private undoManager = new UndoManager();
@@ -30,7 +52,9 @@ class StockStore {
   private flashTimers = new Map<string, number>();
 
   constructor() {
-    this.startSimulation();
+    if (this.isLive.value) {
+      this.startSimulation();
+    }
   }
 
   canUndo = computed(() => {

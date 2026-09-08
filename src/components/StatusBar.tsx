@@ -1,4 +1,4 @@
-﻿// Bottom status bar displaying selected stock live price, market clock, and list metrics.
+// Bottom status bar displaying selected stock live price, market clock, and list metrics.
 import { formatPercentChange, formatPrice, formatSignedChange } from "../format";
 import { store } from "../state";
 
@@ -31,10 +31,24 @@ export function StatusBar() {
 
       {/* Streaming Clock & Market Feed Info */}
       <div class="hidden items-center gap-2 md:flex text-[11px] text-zinc-500">
-        <span class={`h-1.5 w-1.5 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-zinc-600"}`} />
-        <span>{isLive ? "Feed Streaming" : "Feed Paused"}</span>
+        <span
+          class={`h-2 w-2 rounded-full ${
+            store.isMarketOpen.value
+              ? "bg-emerald-400 animate-pulse"
+              : isLive
+              ? "bg-amber-400 animate-pulse"
+              : "bg-rose-500"
+          }`}
+        />
+        <span>
+          {store.isMarketOpen.value
+            ? "TSX / NYSE Active (9:30 AM - 4:00 PM ET)"
+            : isLive
+            ? "Simulating Live Off-Hours Feed"
+            : "Markets Closed • Official Closing Prices Held"}
+        </span>
         <span>•</span>
-        <span>Tick: {lastTick}</span>
+        <span>{lastTick}</span>
       </div>
 
       {/* Portfolio Status Label */}

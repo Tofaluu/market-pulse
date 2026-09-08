@@ -192,7 +192,11 @@ export function ChartView({ stock }: ChartViewProps) {
               </span>
               <span>{isPositive ? "↑" : "↓"}</span>
             </div>
-            <span class="text-xs text-zinc-500">Live Today</span>
+            <span class="text-xs text-zinc-500">
+              {store.isMarketOpen.value || store.isLive.value
+                ? "Live Market"
+                : "Market Closed (Previous Close Held)"}
+            </span>
             <button
               type="button"
               onClick={() => store.setViewMode("ai")}

@@ -1,4 +1,4 @@
-﻿// Top toolbar with application branding, live streaming controls, undo/redo, view toggles, and universal stock search modal.
+// Top toolbar with application branding, live streaming controls, undo/redo, view toggles, and universal stock search modal.
 import { useState } from "preact/hooks";
 import { APP_TITLE } from "../constants";
 import { store } from "../state";
@@ -39,29 +39,50 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
-          {/* Live Market Simulation Status & Toggle */}
-          <button
-            type="button"
-            onClick={() => store.toggleLive()}
-            title={isLive ? "Pause live market stream" : "Resume live market stream"}
-            class={`flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-              isLive
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                : "border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-            }`}
-          >
-            <span class="relative flex h-2 w-2">
-              {isLive && (
-                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              )}
-              <span
-                class={`relative inline-flex h-2 w-2 rounded-full ${
-                  isLive ? "bg-emerald-500" : "bg-amber-500"
-                }`}
-              />
-            </span>
-            <span>{isLive ? "LIVE" : "PAUSED"}</span>
-          </button>
+          {/* Market Status (Open vs Closed) & Simulation Toggle */}
+          <div class="flex items-center gap-2">
+            <div
+              class={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                store.isMarketOpen.value
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+              }`}
+              title={
+                store.isMarketOpen.value
+                  ? "US & Canadian exchanges are open (9:30 AM - 4:00 PM ET)"
+                  : "Markets closed overnight/weekend. Official closing prices held."
+              }
+            >
+              <span class="relative flex h-2 w-2">
+                {store.isMarketOpen.value && isLive && (
+                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  class={`relative inline-flex h-2 w-2 rounded-full ${
+                    store.isMarketOpen.value ? "bg-emerald-500" : "bg-rose-500"
+                  }`}
+                />
+              </span>
+              <span>{store.isMarketOpen.value ? "MARKET OPEN" : "MARKET CLOSED"}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => store.toggleLive()}
+              title={
+                isLive
+                  ? "Simulation active. Click to pause."
+                  : "Simulation paused. Click to simulate live market ticks."
+              }
+              class={`flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium transition ${
+                isLive
+                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              }`}
+            >
+              <span>{isLive ? "⏸ Simulating" : "▶ Simulate"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Middle & Right Controls */}
