@@ -1,9 +1,10 @@
-﻿// Centralized application state, undoable actions, and real-time market simulation engine.
+// Centralized application state, undoable actions, and real-time market simulation engine.
 import { computed, signal } from "@preact/signals";
 import { MAX_STOCKS } from "./constants";
 import type { Stock } from "./stocks";
 import { stockRecords } from "./stocks";
 import { UndoManager, type Command } from "./undo";
+import { GLOBAL_TICKER_DIRECTORY, createStockFromTicker } from "./tickerDatabase";
 
 export type ViewMode = "chart" | "list";
 export type Timeframe = "1D" | "1Y" | "5Y" | "ALL";
@@ -233,24 +234,49 @@ class StockStore {
 
   availableStocks() {
     const current = new Set(this.stocks.value.map((stock) => stock.symbol));
-    return stockRecords.filter((stock) => !current.has(stock.symbol));
+    return GLOBAL_TICKER_DIRECTORY.filter((stock) => !current.has(stock.symbol));
+  }
+
+  addCustomStock(symbol: string, name?: string, price?: number, sector?: string) {
+    if (!this.canAdd.value) return;
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return;
+
+    if (this.stocks.value.some((s) => s.symbol === cleanSymbol)) {
+      this.selectedSymbols.value = new Set([cleanSymbol]);
+      this.viewMode.value = "chart";
+      return;
+    }
+
+    const stock = createStockFromTicker(cleanSymbol, name, price, sector);
+    this.addStock(stock);
   }
 
   addStockBySymbol(symbol: string) {
     if (!this.canAdd.value) return;
-    const candidate = stockRecords.find((s) => s.symbol === symbol);
-    if (!candidate) return;
-    if (this.stocks.value.some((s) => s.symbol === symbol)) return;
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return;
 
-    const pick = { ...candidate };
+    if (this.stocks.value.some((s) => s.symbol === cleanSymbol)) {
+      this.selectedSymbols.value = new Set([cleanSymbol]);
+      this.viewMode.value = "chart";
+      return;
+    }
+
+    const existingInCatalog = stockRecords.find((s) => s.symbol === cleanSymbol);
+    const stock = existingInCatalog ? { ...existingInCatalog } : createStockFromTicker(cleanSymbol);
+    this.addStock(stock);
+  }
+
+  private addStock(stock: Stock) {
     const insertIndex = this.stocks.value.length;
 
     const doAdd = () => {
       const next = this.stocks.value.slice();
-      next.splice(insertIndex, 0, pick);
+      next.splice(insertIndex, 0, stock);
       this.stocks.value = next;
-      // Automatically focus on added stock
-      this.selectedSymbols.value = new Set([pick.symbol]);
+      this.selectedSymbols.value = new Set([stock.symbol]);
+      this.viewMode.value = "chart";
     };
 
     const undoAdd = () => {
@@ -270,25 +296,8 @@ class StockStore {
     const available = this.availableStocks();
     if (available.length === 0) return;
 
-    const pick = { ...available[Math.floor(Math.random() * available.length)] };
-    const insertIndex = this.stocks.value.length;
-
-    const doAdd = () => {
-      const next = this.stocks.value.slice();
-      next.splice(insertIndex, 0, pick);
-      this.stocks.value = next;
-      this.selectedSymbols.value = new Set([pick.symbol]);
-    };
-
-    const undoAdd = () => {
-      const next = this.stocks.value.slice();
-      next.splice(insertIndex, 1);
-      this.stocks.value = next;
-      this.normalizeSelection();
-    };
-
-    this.pushHistory({ do: doAdd, undo: undoAdd });
-    doAdd();
+    const pick = available[Math.floor(Math.random() * available.length)];
+    this.addStockBySymbol(pick.symbol);
   }
 
   deleteSelectedStocks() {

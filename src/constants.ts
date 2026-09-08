@@ -1,5 +1,5 @@
 // Shared constants and static instruction text used by the UI.
-export const MAX_STOCKS = 16;
+export const MAX_STOCKS = 50;
 
 export const APP_TITLE = "MarketPulse";
 
