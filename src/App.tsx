@@ -1,0 +1,43 @@
+import { useEffect } from "preact/hooks";
+import { StockDetails } from "./components/StockDetails";
+import { StatusBar } from "./components/StatusBar";
+import { StockList } from "./components/StockList";
+import { Toolbar } from "./components/Toolbar";
+import { store } from "./state";
+
+export function App() {
+  useEffect(() => {
+    // Global keyboard shortcuts mirror toolbar actions.
+    const handler = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+      const key = event.key.toLowerCase();
+      if (!["a", "d", "c", "u", "r"].includes(key)) return;
+      if (!event.shiftKey) return;
+
+      store.handleShortcut(key);
+      event.preventDefault();
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return (
+    <main class="flex h-screen w-screen flex-col bg-zinc-100 text-zinc-900">
+      <Toolbar
+        onAdd={() => store.addRandomStock()}
+        onDelete={() => store.deleteSelectedStocks()}
+        onUndo={() => store.undo()}
+        onRedo={() => store.redo()}
+      />
+
+      <section class="flex min-h-0 flex-1">
+        <StockList onBackgroundClick={() => store.clearSelection()} />
+        <StockDetails />
+      </section>
+
+      <StatusBar />
+    </main>
+  );
+}

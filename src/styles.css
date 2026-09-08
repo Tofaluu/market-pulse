@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Global defaults; component-level styling is defined with Tailwind classes. */
+:root {
+  font-family: arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
