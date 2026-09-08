@@ -1,22 +1,23 @@
 // Shared constants and static instruction text used by the UI.
-export const MAX_STOCKS = 9;
+export const MAX_STOCKS = 16;
 
-export const APP_TITLE = "Stocks";
+export const APP_TITLE = "MarketPulse";
 
 export const WELCOME_TEXT = {
-  title: "Welcome to Assignment 4!",
-  subtitle: "This is the Preact version of the Stocks application.",
+  title: "Welcome to MarketPulse",
+  subtitle: "High-performance real-time market tracker & portfolio visualization dashboard.",
   supported: [
-    "Use the Add and Del buttons to add or remove a stock.",
-    "Click to select a stock in the list, or Shift-click to select multiple stocks.",
-    "When viewing a single stock, use the Chart and List buttons for details.",
+    "Live real-time price updates with visual tick animations.",
+    "Interactive SVG line charts with crosshairs, tooltips, and timeframe toggles.",
+    "Comprehensive undo/redo command stack with full history support.",
+    "Filter and search stocks instantly from the global tech universe.",
   ],
   shortcuts: [
-    "Shift-A - add a random stock",
+    "Shift-A - add stock to watchlist",
     "Shift-D - delete selected stocks",
-    "Shift-C - clear all selections",
-    "Shift-U - undo",
-    "Shift-R - redo",
+    "Shift-C - clear selection",
+    "Shift-U - undo last action",
+    "Shift-R - redo action",
   ],
 };
 
