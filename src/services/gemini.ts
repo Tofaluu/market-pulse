@@ -190,10 +190,25 @@ Output only the JSON block without markdown backticks if possible, or inside a c
   };
 }
 
+function sanitizeAiResponse(text: string): string {
+  let cleaned = text.trim();
+  // Strip common conversational chatbot prefixes:
+  cleaned = cleaned.replace(
+    /^(?:here\s+is|certainly|below\s+is|sure|as\s+an?\s+ai|of\s+course)[^\n]*\n+/i,
+    ""
+  );
+  cleaned = cleaned.replace(
+    /^(?:here\s+(?:is|are)|in\s+this\s+report|the\s+following\s+is)[^\n]*:\s*\n+/i,
+    ""
+  );
+  cleaned = cleaned.replace(/^---+\s*\n+/, "");
+  return cleaned.trim();
+}
+
 export type AnalysisTopic = "summary" | "trajectory" | "risks" | "custom";
 
 /**
- * Conducts specialized AI research on a company or ETF.
+ * Conducts specialized, highly structured institutional AI research on a company or ETF.
  */
 export async function analyzeCompanyWithAI(
   symbol: string,
@@ -201,34 +216,90 @@ export async function analyzeCompanyWithAI(
   topic: AnalysisTopic,
   customQuestion?: string
 ): Promise<string> {
+  const commonDirectives = `
+IMPORTANT DIRECTIVES:
+- DO NOT include conversational filler, pleasantries, or phrases like "Here is...", "Below is...", or "Certainly!".
+- Jump directly into the first markdown header.
+- Maintain an institutional, concise, high-density equity research tone.
+- Use bold lead-ins for every bullet point. Keep explanations focused and avoid fluffy filler.
+`;
+
   let prompt = "";
 
   if (topic === "summary") {
-    prompt = `You are a Wall Street senior equity research analyst. Write a concise, insightful executive overview of '${name}' (${symbol}).
-Include:
-1. Core Business / Fund Model: What they do and how they generate profit or asset allocation (if ETF like XEQT).
-2. Competitive Moat: What gives them a defensible market advantage.
-3. Target Market & Core Customers.
-Keep the formatting clean with markdown bullet points and bold key terms. Be punchy and professional.`;
+    prompt = `You are a senior equity research analyst analyzing '${name}' (${symbol}).
+${commonDirectives}
+
+Provide a structured, concise executive overview using EXACTLY this markdown layout:
+
+### **Core Business & Revenue Model**
+* **Primary Activities:** [2 sentences on core operations or asset allocation if ETF]
+* **Monetization & Margins:** [1-2 sentences on profit drivers, cash flow, or MER/yield if ETF]
+
+### **Competitive Moat**
+* **Defensible Advantage:** [1-2 sentences on moat: network effects, scale, switching costs, or tax efficiency]
+* **Pricing Power:** [1 sentence on customer stickiness or fee durability]
+
+### **Target Market & Client Base**
+* **Core Demographics:** [1-2 sentences on core customer profile or ideal investor persona]
+
+### **Executive Takeaway**
+[1 punchy sentence synthesizing their long-term competitive durability]`;
   } else if (topic === "trajectory") {
-    prompt = `You are a strategic financial analyst. Perform a forward-looking trajectory and catalyst analysis for '${name}' (${symbol}).
-Include:
-1. Key Growth Drivers & Catalysts: What tailwinds (AI, interest rate cycles, market expansion, product roadmap) could drive revenue and valuation over the next 2-5 years.
-2. Bull Case Scenario: Potential upside if execution is flawless.
-3. Bear Case Scenario: Potential downside if key risks materialize.
-4. Strategic Outlook: Overall consensus.
-Format in clear markdown sections with bullets.`;
+    prompt = `You are a strategic financial analyst conducting a 2–5 year trajectory analysis for '${name}' (${symbol}).
+${commonDirectives}
+
+Provide a structured, forward-looking roadmap using EXACTLY this markdown layout:
+
+### **Key Growth Catalysts & Tailwinds (2–5 Years)**
+* **[Catalyst 1 Name]:** [1-2 sentences on specific growth driver e.g. AI infrastructure, rate cycle, or secular inflows]
+* **[Catalyst 2 Name]:** [1-2 sentences on operational or industry tailwind]
+* **[Catalyst 3 Name]:** [1-2 sentences on valuation re-rating or market expansion]
+
+### **Bull vs. Bear Scenarios**
+* **Bull Case (Upside):** [2 sentences on realistic upside thesis and target return/valuation]
+* **Bear Case (Downside):** [2 sentences on primary risk trigger and potential drawdown]
+
+### **Strategic Consensus Outlook**
+* **Consensus Stance:** **[ACCUMULATE / HOLD / BUY ON PULLBACKS / SPECULATIVE]**
+* **Rationale:** [2 sentences on optimal investor time horizon and execution approach]`;
   } else if (topic === "risks") {
-    prompt = `You are a risk management analyst. Identify the top 3-4 critical risks, headwinds, and threats facing '${name}' (${symbol}).
-Include macroeconomic risks (interest rates, inflation), competitive threats, regulatory/legal exposure, and operational challenges.
-Be realistic, objective, and specific to their industry. Format in markdown bullets.`;
+    prompt = `You are a chief risk officer auditing '${name}' (${symbol}).
+${commonDirectives}
+
+Provide a structured, objective risk audit using EXACTLY this markdown layout:
+
+### **Critical Risk Factors & Headwinds**
+* **Macro & Interest Rate Sensitivity:** [1-2 sentences on inflation, discount rate impact, or economic cycle]
+* **Industry & Valuation Pressure:** [1-2 sentences on multiple contraction, tech concentration, or competition]
+* **Operational & Regulatory Exposure:** [1-2 sentences on legal, geopolitical, or operational friction]
+* **Currency & Liquidity:** [1 sentence on FX drag, liquidity, or volatility profile]
+
+### **Vulnerability Assessment**
+* **Risk Profile:** **[LOW / MODERATE / HIGH]**
+* **Key Vulnerability:** [1-2 sentences identifying the single catalyst that could most impair the thesis]`;
   } else {
-    prompt = `You are a financial research assistant analyzing '${name}' (${symbol}). Answer the following user question thoroughly and objectively with financial context:
-"${customQuestion}"
-Format your response in structured markdown with headings or bullet points where appropriate.`;
+    prompt = `You are an institutional financial analyst analyzing '${name}' (${symbol}).
+${commonDirectives}
+
+User Question: "${customQuestion}"
+
+Provide a structured, objective response using EXACTLY this markdown layout:
+
+### **Direct Answer**
+[1-2 clear, direct sentences directly addressing the user's specific query]
+
+### **Key Financial Factors**
+* **[Factor 1]:** [1-2 sentences of contextual evidence or financial rationale]
+* **[Factor 2]:** [1-2 sentences of contextual evidence or financial rationale]
+* **[Factor 3]:** [1-2 sentences of contextual evidence or financial rationale]
+
+### **Investor Bottom Line**
+[1 concise takeaway sentence summarizing the practical implication for an investor]`;
   }
 
-  return await callGemini(prompt, false);
+  const raw = await callGemini(prompt, false);
+  return sanitizeAiResponse(raw);
 }
 
 export type BatchPriceResult = Record<
