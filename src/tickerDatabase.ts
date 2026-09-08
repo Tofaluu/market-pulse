@@ -1,4 +1,4 @@
-﻿// Extensive global ticker directory & universal dynamic stock generator.
+// Extensive global ticker directory & universal dynamic stock generator.
 import type { Stock, Point, IntradayPoint } from "./stocks";
 
 export type TickerInfo = {
@@ -90,6 +90,23 @@ export const GLOBAL_TICKER_DIRECTORY: TickerInfo[] = [
   { symbol: "IWM", name: "iShares Russell 2000 ETF", sector: "US Small-Cap Index", basePrice: 232.40, baseMcap: 75, peRatio: 18.2 },
   { symbol: "SMH", name: "VanEck Semiconductor ETF", sector: "Global Semiconductor Index", basePrice: 268.50, baseMcap: 24, peRatio: 38.0 },
   { symbol: "ARKK", name: "ARK Innovation ETF", sector: "Disruptive Innovation Tech", basePrice: 54.20, baseMcap: 8, peRatio: 42.0 },
+
+  // 🇨🇦 Canadian Equities & TSX Favorites
+  { symbol: "XEQT", name: "iShares Core Equity ETF Portfolio (TSX)", sector: "Canadian All-Equity Asset Allocation ETF", basePrice: 34.65, baseMcap: 5.8, peRatio: 17.5 },
+  { symbol: "VEQT", name: "Vanguard All-Equity ETF Portfolio (TSX)", sector: "Canadian All-Equity Asset Allocation ETF", basePrice: 42.15, baseMcap: 4.6, peRatio: 17.2 },
+  { symbol: "VFV", name: "Vanguard S&P 500 Index ETF (TSX)", sector: "Canadian S&P 500 Index ETF (CAD)", basePrice: 145.20, baseMcap: 16.5, peRatio: 25.4 },
+  { symbol: "XEQT.TO", name: "iShares Core Equity ETF Portfolio", sector: "Canadian All-Equity ETF (TSX)", basePrice: 34.65, baseMcap: 5.8, peRatio: 17.5 },
+  { symbol: "VEQT.TO", name: "Vanguard All-Equity ETF Portfolio", sector: "Canadian All-Equity ETF (TSX)", basePrice: 42.15, baseMcap: 4.6, peRatio: 17.2 },
+  { symbol: "RY", name: "Royal Bank of Canada (TSX/NYSE)", sector: "Canadian Diversified Banking", basePrice: 178.50, baseMcap: 252, peRatio: 13.2 },
+  { symbol: "TD", name: "Toronto-Dominion Bank (TSX/NYSE)", sector: "Canadian & US Retail Banking", basePrice: 84.20, baseMcap: 148, peRatio: 11.5 },
+  { symbol: "BNS", name: "Bank of Nova Scotia (TSX/NYSE)", sector: "Canadian Banking & Wealth", basePrice: 72.80, baseMcap: 88, peRatio: 11.0 },
+  { symbol: "BMO", name: "Bank of Montreal (TSX/NYSE)", sector: "Canadian Commercial Banking", basePrice: 134.20, baseMcap: 98, peRatio: 12.8 },
+  { symbol: "ENB", name: "Enbridge (TSX/NYSE)", sector: "Canadian Energy Pipelines", basePrice: 56.40, baseMcap: 120, peRatio: 18.2 },
+  { symbol: "CNR", name: "Canadian National Railway (TSX/NYSE)", sector: "Freight & Transcontinental Rail", basePrice: 158.90, baseMcap: 98, peRatio: 20.4 },
+  { symbol: "CP", name: "Canadian Pacific Kansas City (TSX/NYSE)", sector: "Transcontinental Freight Rail", basePrice: 110.20, baseMcap: 102, peRatio: 23.0 },
+  { symbol: "CSU", name: "Constellation Software (TSX)", sector: "Canadian Vertical Market Software", basePrice: 4350.00, baseMcap: 92, peRatio: 38.0 },
+  { symbol: "ATD", name: "Alimentation Couche-Tard (TSX)", sector: "Global Convenience & Fuel Retail", basePrice: 78.50, baseMcap: 74, peRatio: 17.5 },
+  { symbol: "BAM", name: "Brookfield Asset Management (TSX/NYSE)", sector: "Global Alternative Asset Management", basePrice: 72.30, baseMcap: 118, peRatio: 26.0 },
 
   // Popular Growth & Community Stocks
   { symbol: "GME", name: "GameStop", sector: "Gaming Retail & Specialty", basePrice: 26.50, baseMcap: 11, peRatio: 65.0 },

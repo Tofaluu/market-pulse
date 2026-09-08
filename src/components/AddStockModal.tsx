@@ -1,4 +1,4 @@
-﻿// Modal dialog allowing users to search and add ANY stock or custom ticker to their watchlist.
+// Modal dialog allowing users to search and add ANY stock or custom ticker to their watchlist.
 import { useMemo, useState } from "preact/hooks";
 import { store } from "../state";
 import { GLOBAL_TICKER_DIRECTORY, type TickerInfo } from "../tickerDatabase";
@@ -8,7 +8,7 @@ type AddStockModalProps = {
   onClose: () => void;
 };
 
-type SectorCategory = "All" | "Tech" | "Finance" | "Consumer" | "ETFs" | "Growth";
+type SectorCategory = "All" | "🇨🇦 Canada" | "Tech" | "Finance" | "Consumer" | "ETFs" | "Growth";
 
 export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
   if (!isOpen) return null;
@@ -28,6 +28,9 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
   const filteredTickers = useMemo(() => {
     return GLOBAL_TICKER_DIRECTORY.filter((t) => {
       // Category filter
+      if (selectedCategory === "🇨🇦 Canada" && !t.sector.includes("Canadian") && !t.name.includes("TSX") && !t.symbol.includes(".TO")) {
+        return false;
+      }
       if (selectedCategory === "Tech" && !t.sector.includes("Semi") && !t.sector.includes("Tech") && !t.sector.includes("Software") && !t.sector.includes("AI") && !t.sector.includes("Internet")) {
         return false;
       }
@@ -123,7 +126,7 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
               autoFocus
               value={query}
               onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
-              placeholder="Search ticker (e.g. SPY, AAPL, GME, SHOP, COIN) or company name..."
+              placeholder="Search ticker (e.g. XEQT, SHOP, SPY, AAPL) or company name..."
               class="w-full rounded-xl border border-zinc-750 bg-zinc-950 px-10 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
             />
             <svg
@@ -147,7 +150,7 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
 
           {/* Sector Category Filter Tabs */}
           <div class="mt-3 flex flex-wrap gap-1.5 text-xs">
-            {(["All", "Tech", "Finance", "Consumer", "ETFs", "Growth"] as SectorCategory[]).map(
+            {(["All", "🇨🇦 Canada", "Tech", "Finance", "Consumer", "ETFs", "Growth"] as SectorCategory[]).map(
               (cat) => (
                 <button
                   key={cat}
@@ -264,7 +267,7 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
           <div class="flex items-center gap-2 text-zinc-400">
             <span class="font-semibold text-zinc-300">Quick Picks:</span>
             <div class="flex flex-wrap gap-1.5">
-              {["SPY", "QQQ", "COIN", "SHOP", "DIS", "GME", "MSTR", "UBER"].map((sym) => {
+              {["XEQT", "VEQT", "VFV", "SHOP", "RY", "TD", "SPY", "QQQ", "COIN"].map((sym) => {
                 const added = currentSymbols.has(sym);
                 return (
                   <button
