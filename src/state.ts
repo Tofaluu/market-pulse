@@ -6,7 +6,7 @@ import { stockRecords } from "./stocks";
 import { UndoManager, type Command } from "./undo";
 import { GLOBAL_TICKER_DIRECTORY, createStockFromTicker } from "./tickerDatabase";
 
-export type ViewMode = "chart" | "list";
+export type ViewMode = "chart" | "list" | "ai";
 export type Timeframe = "1D" | "1Y" | "5Y" | "ALL";
 export type ChartMetric = "price" | "mcap";
 
@@ -199,6 +199,46 @@ class StockStore {
       s.symbol === symbol ? { ...s, flash: null } : s
     );
     this.flashTimers.delete(symbol);
+  }
+
+  updateStockPrice(
+    symbol: string,
+    newPrice: number,
+    newChange?: number,
+    newPctChange?: number
+  ) {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    this.stocks.value = this.stocks.value.map((s) => {
+      if (s.symbol !== cleanSymbol) return s;
+
+      const change =
+        newChange !== undefined
+          ? newChange
+          : Number((newPrice - s.open).toFixed(2));
+      const percentChange =
+        newPctChange !== undefined
+          ? newPctChange
+          : Number(((change / s.open) * 100).toFixed(2));
+      const direction: "up" | "down" = newPrice >= s.price ? "up" : "down";
+
+      const now = new Date();
+      const timeStr = now.toTimeString().slice(0, 5);
+      const updatedIntraday = [
+        ...s.intraday.slice(-30),
+        { time: timeStr, price: newPrice },
+      ];
+
+      return {
+        ...s,
+        price: newPrice,
+        change,
+        percentChange,
+        dayHigh: Math.max(s.dayHigh, newPrice),
+        dayLow: Math.min(s.dayLow, newPrice),
+        flash: direction,
+        intraday: updatedIntraday,
+      };
+    });
   }
 
   // --- Undo/Redo & Watchlist Operations ---

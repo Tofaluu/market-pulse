@@ -1,5 +1,6 @@
 // Chooses instructions, chart, or list based on current selection state.
 import { store } from "../state";
+import { AiAnalystView } from "./AiAnalystView";
 import { ChartView } from "./ChartView";
 import { Instructions } from "./Instructions";
 import { ListView } from "./ListView";
@@ -17,6 +18,9 @@ export function StockDetails() {
       ) : null}
       {count === 1 && selected && store.viewMode.value === "list" ? (
         <ListView stock={selected} />
+      ) : null}
+      {count === 1 && selected && store.viewMode.value === "ai" ? (
+        <AiAnalystView stock={selected} />
       ) : null}
     </section>
   );

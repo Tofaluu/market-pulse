@@ -3,6 +3,7 @@ import { useState } from "preact/hooks";
 import { APP_TITLE } from "../constants";
 import { store } from "../state";
 import { AddStockModal } from "./AddStockModal";
+import { AiSettingsModal } from "./AiSettingsModal";
 
 type ToolbarProps = {
   onAdd: () => void;
@@ -13,6 +14,7 @@ type ToolbarProps = {
 
 export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const canSingle = store.hasSingleSelection.value;
   const mode = store.viewMode.value;
   const isLive = store.isLive.value;
@@ -130,7 +132,7 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
-          {/* View Mode Segmented Controls */}
+          {/* View Mode Segmented Controls (Chart, Table, AI Analyst) */}
           <div class="flex items-center rounded-lg border border-zinc-800 bg-zinc-950/80 p-0.5">
             <button
               type="button"
@@ -163,12 +165,42 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
               </svg>
               <span>Table</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => store.setViewMode("ai")}
+              disabled={!canSingle}
+              class={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition ${
+                mode === "ai" && canSingle
+                  ? "bg-violet-600 text-white shadow"
+                  : "text-zinc-400 hover:text-violet-300 disabled:cursor-not-allowed disabled:text-zinc-650"
+              }`}
+            >
+              <span>🤖</span>
+              <span>AI Analyst</span>
+            </button>
           </div>
+
+          {/* AI Settings Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsAiSettingsOpen(true)}
+            title="Configure Gemini API Key"
+            class="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-400 hover:border-zinc-700 hover:text-white transition"
+          >
+            ⚙️
+          </button>
         </div>
       </header>
 
       {/* Universal Search & Add Modal */}
       <AddStockModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {/* AI Settings Modal */}
+      <AiSettingsModal
+        isOpen={isAiSettingsOpen}
+        onClose={() => setIsAiSettingsOpen(false)}
+      />
     </>
   );
 }
