@@ -1,7 +1,8 @@
 {
-  "name": "a4",
-  "private": true,
-  "version": "0.0.0",
+  "name": "market-pulse",
+  "version": "1.0.0",
+  "description": "High-performance real-time market analytics and stock tracking dashboard built with Preact, Signals, and Tailwind CSS",
+  "author": "Thomas Liu <samohtliu@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite",
