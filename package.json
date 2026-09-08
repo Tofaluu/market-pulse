@@ -13,6 +13,7 @@
     "@preact/signals": "^2.8.1",
     "@tailwindcss/vite": "^4.2.1",
     "goober": "^2.1.18",
+    "marked": "^18.0.12",
     "preact": "~10.28.0",
     "tailwindcss": "^4.2.1"
   },
