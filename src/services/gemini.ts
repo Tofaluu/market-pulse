@@ -1,4 +1,4 @@
-﻿// Gemini 2.0 Flash AI Service with Google Search Grounding for live financial lookups & company research.
+// Gemini 2.0 Flash AI Service with Google Search Grounding for live financial lookups & company research.
 
 const API_KEY_STORAGE_KEY = "marketpulse_gemini_api_key";
 
@@ -36,8 +36,14 @@ export type LivePriceResult = {
 };
 
 /**
- * Executes a raw query to Gemini 2.0 Flash with optional Google Search Grounding.
+ * Executes a raw query to Gemini Flash with optional Google Search Grounding.
  */
+const CANDIDATE_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+];
+
 export async function callGemini(
   prompt: string,
   useSearchGrounding: boolean = false
@@ -49,41 +55,69 @@ export async function callGemini(
     );
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  let lastError: Error | null = null;
 
-  const requestBody: any = {
-    contents: [
-      {
-        parts: [{ text: prompt }],
-      },
-    ],
-  };
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  if (useSearchGrounding) {
-    requestBody.tools = [{ google_search: {} }];
+      const requestBody: any = {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      };
+
+      if (useSearchGrounding) {
+        requestBody.tools = [{ google_search: {} }];
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message =
+          errorData?.error?.message ||
+          `Gemini API returned error code ${response.status}`;
+
+        // If the model is deprecated or not available, try the next model candidate
+        if (
+          message.includes("no longer available") ||
+          message.includes("not found") ||
+          response.status === 404
+        ) {
+          lastError = new Error(message);
+          continue;
+        }
+
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const text =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "No response returned from Gemini.";
+      return text;
+    } catch (err: any) {
+      lastError = err;
+      if (
+        err.message?.includes("no longer available") ||
+        err.message?.includes("not found")
+      ) {
+        continue;
+      }
+      throw err;
+    }
   }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message =
-      errorData?.error?.message ||
-      `Gemini API returned error code ${response.status}`;
-    throw new Error(message);
-  }
-
-  const data = await response.json();
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-    "No response returned from Gemini.";
-  return text;
+  throw lastError || new Error("All Gemini models failed.");
 }
 
 /**

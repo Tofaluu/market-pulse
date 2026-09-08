@@ -1,4 +1,4 @@
-﻿// Dedicated AI Analyst tab with live web search price checking and equity research capabilities.
+// Dedicated AI Analyst tab with live web search price checking and equity research capabilities.
 import { useState } from "preact/hooks";
 import { formatPercentChange, formatPrice, formatSignedChange } from "../format";
 import {
@@ -88,7 +88,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               {stock.symbol}
             </span>
             <span class="rounded-md bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-xs font-medium text-violet-300">
-              Gemini 2.0 AI Analyst
+              Gemini 3.6 AI Analyst
             </span>
           </div>
 
@@ -265,7 +265,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           <div class="flex flex-col items-center justify-center py-12 text-center">
             <div class="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent mb-3" />
             <span class="text-xs font-medium text-zinc-300">
-              Gemini 2.0 is analyzing {stock.symbol}...
+              Gemini 3.6 is analyzing {stock.symbol}...
             </span>
             <span class="text-[11px] text-zinc-500 mt-1">
               Synthesizing financial reports & market trends

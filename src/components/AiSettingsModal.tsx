@@ -1,4 +1,4 @@
-﻿// Modal dialog for configuring the Gemini API key.
+// Modal dialog for configuring the Gemini API key.
 import { useState } from "preact/hooks";
 import { clearGeminiApiKey, getGeminiApiKey, setGeminiApiKey } from "../services/gemini";
 
@@ -67,7 +67,7 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
 
         <div class="mt-4 space-y-3 text-xs text-zinc-300">
           <p class="leading-relaxed">
-            MarketPulse uses <strong>Google Gemini 2.0 Flash</strong> with real-time web search grounding to fetch live stock prices and generate research summaries.
+            MarketPulse uses <strong>Google Gemini 3.6 Flash</strong> with real-time web search grounding to fetch live stock prices and generate research summaries.
           </p>
 
           <div>
