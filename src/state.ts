@@ -2,7 +2,7 @@
 import { computed, signal } from "@preact/signals";
 import { MAX_STOCKS } from "./constants";
 import type { Stock } from "./stocks";
-import { stockRecords } from "./stocks";
+import { stockRecords, generateIntraday } from "./stocks";
 import { UndoManager, type Command } from "./undo";
 import { GLOBAL_TICKER_DIRECTORY, createStockFromTicker } from "./tickerDatabase";
 
@@ -29,10 +29,40 @@ export function isMarketOpen(): boolean {
   }
 }
 
+const STORAGE_KEY = "marketpulse_watchlist_v2";
+
+function loadPersistedWatchlist(): Stock[] | null {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return null;
+    const parsed = JSON.parse(data);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+  } catch (err) {
+    console.warn("Failed to load persisted watchlist", err);
+  }
+  return null;
+}
+
+function persistWatchlist(stocks: Stock[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
+  } catch (err) {
+    console.warn("Failed to persist watchlist", err);
+  }
+}
+
 class StockStore {
-  // Initialize with initial top 6 stocks for immediate rich visualization
-  stocks = signal<Stock[]>(stockRecords.slice(0, 6).map((s) => ({ ...s })));
-  selectedSymbols = signal<Set<string>>(new Set(["NVDA"]));
+  // Initialize with persisted watchlist if present, otherwise initial curated stocks
+  private initialStocks =
+    loadPersistedWatchlist() ??
+    stockRecords.slice(0, 6).map((s) => ({ ...s }));
+
+  stocks = signal<Stock[]>(this.initialStocks);
+  selectedSymbols = signal<Set<string>>(
+    new Set([this.initialStocks[0]?.symbol || "XEQT"])
+  );
   viewMode = signal<ViewMode>("chart");
   chartTimeframe = signal<Timeframe>("1D");
   chartMetric = signal<ChartMetric>("price");
@@ -55,6 +85,20 @@ class StockStore {
     if (this.isLive.value) {
       this.startSimulation();
     }
+  }
+
+  save() {
+    persistWatchlist(this.stocks.value);
+  }
+
+  resetToDefaultWatchlist() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    const defaults = stockRecords.slice(0, 6).map((s) => ({ ...s }));
+    this.stocks.value = defaults;
+    this.selectedSymbols.value = new Set([defaults[0]?.symbol || "XEQT"]);
+    this.save();
   }
 
   canUndo = computed(() => {
@@ -245,12 +289,10 @@ class StockStore {
           : Number(((change / s.open) * 100).toFixed(2));
       const direction: "up" | "down" = newPrice >= s.price ? "up" : "down";
 
-      const now = new Date();
-      const timeStr = now.toTimeString().slice(0, 5);
-      const updatedIntraday = [
-        ...s.intraday.slice(-30),
-        { time: timeStr, price: newPrice },
-      ];
+      const updatedHistory = (s.history || []).map((h) =>
+        h.year === 2026 ? { ...h, price: newPrice } : h
+      );
+      const updatedIntraday = generateIntraday(newPrice, change);
 
       return {
         ...s,
@@ -261,8 +303,55 @@ class StockStore {
         dayLow: Math.min(s.dayLow, newPrice),
         flash: direction,
         intraday: updatedIntraday,
+        history: updatedHistory,
       };
     });
+    this.save();
+  }
+
+  batchUpdatePrices(
+    priceMap: Record<
+      string,
+      { price: number; change?: number; percentChange?: number }
+    >
+  ) {
+    this.stocks.value = this.stocks.value.map((stock) => {
+      const sym = stock.symbol.toUpperCase();
+      const update =
+        priceMap[sym] ||
+        (sym.endsWith(".TO") ? priceMap[sym.replace(".TO", "")] : priceMap[`${sym}.TO`]);
+
+      if (!update) return stock;
+
+      const change =
+        update.change !== undefined
+          ? update.change
+          : Number((update.price - stock.open).toFixed(2));
+      const percentChange =
+        update.percentChange !== undefined
+          ? update.percentChange
+          : Number(((change / stock.open) * 100).toFixed(2));
+      const direction: "up" | "down" =
+        update.price >= stock.price ? "up" : "down";
+
+      const updatedHistory = (stock.history || []).map((h) =>
+        h.year === 2026 ? { ...h, price: update.price } : h
+      );
+      const updatedIntraday = generateIntraday(update.price, change);
+
+      return {
+        ...stock,
+        price: update.price,
+        change,
+        percentChange,
+        dayHigh: Math.max(stock.dayHigh, update.price),
+        dayLow: Math.min(stock.dayLow, update.price),
+        flash: direction,
+        intraday: updatedIntraday,
+        history: updatedHistory,
+      };
+    });
+    this.save();
   }
 
   // --- Undo/Redo & Watchlist Operations ---
@@ -341,6 +430,7 @@ class StockStore {
       this.stocks.value = next;
       this.selectedSymbols.value = new Set([stock.symbol]);
       this.viewMode.value = "chart";
+      this.save();
     };
 
     const undoAdd = () => {
@@ -348,6 +438,7 @@ class StockStore {
       next.splice(insertIndex, 1);
       this.stocks.value = next;
       this.normalizeSelection();
+      this.save();
     };
 
     this.pushHistory({ do: doAdd, undo: undoAdd });
@@ -389,12 +480,14 @@ class StockStore {
 
       if (next.length === 0) {
         this.selectedSymbols.value = new Set();
+        this.save();
         return;
       }
 
       const nextIndex = Math.max(0, Math.min(topMostDeleted - 1, next.length - 1));
       this.selectedSymbols.value = new Set([next[nextIndex].symbol]);
       this.viewMode.value = "chart";
+      this.save();
     };
 
     const undoDelete = () => {
@@ -403,6 +496,7 @@ class StockStore {
       if (previousSelection.size === 1) {
         this.viewMode.value = "chart";
       }
+      this.save();
     };
 
     this.pushHistory({ do: doDelete, undo: undoDelete });

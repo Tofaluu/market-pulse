@@ -1,6 +1,8 @@
-﻿// Left-side stock watchlist sidebar with live search, sparklines, and price flashing.
+import { useState } from "preact/hooks";
 import { formatPercentChange, formatPrice } from "../format";
 import { store } from "../state";
+import { batchFetchLivePricesWithAI, hasGeminiApiKey } from "../services/gemini";
+import { AiSettingsModal } from "./AiSettingsModal";
 
 type StockListProps = {
   onBackgroundClick: () => void;
@@ -10,6 +12,36 @@ export function StockList({ onBackgroundClick }: StockListProps) {
   const stocks = store.filteredStocks.value;
   const totalCount = store.stocks.value.length;
   const searchQuery = store.searchQuery.value;
+
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleSyncAll = async () => {
+    if (!hasGeminiApiKey()) {
+      setIsAiSettingsOpen(true);
+      return;
+    }
+    if (store.stocks.value.length === 0) return;
+
+    setIsSyncing(true);
+    setSyncMessage(null);
+    try {
+      const results = await batchFetchLivePricesWithAI(store.stocks.value);
+      const count = Object.keys(results).length;
+      if (count > 0) {
+        store.batchUpdatePrices(results);
+        setSyncMessage(`✓ Synced ${count} stocks with live quotes`);
+      } else {
+        setSyncMessage("No updates returned");
+      }
+    } catch (err: any) {
+      setSyncMessage(err?.message || "Sync failed");
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMessage(null), 4000);
+    }
+  };
 
   return (
     <aside
@@ -21,11 +53,46 @@ export function StockList({ onBackgroundClick }: StockListProps) {
       {/* Search & Watchlist Header */}
       <div class="border-b border-zinc-850 p-3 bg-zinc-900/40">
         <div class="mb-2 flex items-center justify-between text-xs">
-          <span class="font-semibold uppercase tracking-wider text-zinc-400">Watchlist</span>
-          <span class="rounded bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-300">
-            {totalCount} stocks
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold uppercase tracking-wider text-zinc-400">Watchlist</span>
+            <span class="rounded bg-zinc-800 px-1.5 py-0.2 text-[10px] font-medium text-zinc-400">
+              {totalCount}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSyncAll}
+            disabled={isSyncing || totalCount === 0}
+            title={
+              hasGeminiApiKey()
+                ? "Refresh all stock prices using Gemini AI & Google Search"
+                : "Set Gemini API Key to fetch live real-world prices"
+            }
+            class="flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 text-[11px] font-medium text-violet-300 hover:bg-violet-500/25 transition disabled:opacity-50"
+          >
+            {isSyncing ? (
+              <>
+                <svg class="h-3 w-3 animate-spin text-violet-300" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Syncing...</span>
+              </>
+            ) : (
+              <>
+                <span>✨</span>
+                <span>Sync All</span>
+              </>
+            )}
+          </button>
         </div>
+
+        {syncMessage && (
+          <div class="mb-2 rounded border border-violet-500/30 bg-violet-950/40 px-2 py-1 text-[10px] font-medium text-violet-200 animate-in fade-in">
+            {syncMessage}
+          </div>
+        )}
 
         {/* Live Filter Input */}
         <div class="relative">
@@ -166,6 +233,11 @@ export function StockList({ onBackgroundClick }: StockListProps) {
           })
         )}
       </div>
+
+      <AiSettingsModal
+        isOpen={isAiSettingsOpen}
+        onClose={() => setIsAiSettingsOpen(false)}
+      />
     </aside>
   );
 }

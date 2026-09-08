@@ -10,6 +10,10 @@ export function getGeminiApiKey(): string {
   }
 }
 
+export function hasGeminiApiKey(): boolean {
+  return Boolean(getGeminiApiKey().trim());
+}
+
 export function setGeminiApiKey(key: string): void {
   try {
     localStorage.setItem(API_KEY_STORAGE_KEY, key.trim());
@@ -225,4 +229,55 @@ Format your response in structured markdown with headings or bullet points where
   }
 
   return await callGemini(prompt, false);
+}
+
+export type BatchPriceResult = Record<
+  string,
+  { price: number; change?: number; percentChange?: number; currency?: string }
+>;
+
+/**
+ * Uses Gemini with Google Search to fetch real-world quotes for all active stocks in one query.
+ */
+export async function batchFetchLivePricesWithAI(
+  stocks: { symbol: string; name: string }[]
+): Promise<BatchPriceResult> {
+  if (stocks.length === 0) return {};
+
+  const stockListStr = stocks.map((s) => `${s.symbol} (${s.name})`).join(", ");
+  const prompt = `You are a financial market data agent. Perform a Google Search to find current, up-to-date real-world trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT, SHOP, RY) for these assets:
+${stockListStr}
+
+Provide output strictly in this JSON format without markdown wrapping:
+{
+  "SYMBOL": {
+    "price": <numeric price>,
+    "change": <numeric day change>,
+    "percentChange": <numeric percent change>,
+    "currency": <"USD" or "CAD">
+  }
+}`;
+
+  const raw = await callGemini(prompt, true);
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return {};
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    const results: BatchPriceResult = {};
+    for (const [key, val] of Object.entries(parsed)) {
+      const item = val as any;
+      if (item && typeof item.price === "number") {
+        results[key.toUpperCase()] = {
+          price: Number(item.price.toFixed(2)),
+          change: typeof item.change === "number" ? Number(item.change.toFixed(2)) : undefined,
+          percentChange: typeof item.percentChange === "number" ? Number(item.percentChange.toFixed(2)) : undefined,
+          currency: item.currency || "USD",
+        };
+      }
+    }
+    return results;
+  } catch {
+    return {};
+  }
 }

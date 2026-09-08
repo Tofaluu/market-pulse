@@ -1,6 +1,6 @@
-// Modal dialog for configuring the Gemini API key.
 import { useState } from "preact/hooks";
 import { clearGeminiApiKey, getGeminiApiKey, setGeminiApiKey } from "../services/gemini";
+import { store } from "../state";
 
 type AiSettingsModalProps = {
   isOpen: boolean;
@@ -97,6 +97,27 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
 
           <div class="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-[11px] text-zinc-400">
             🔒 <strong>Private & Secure:</strong> Your API key is stored strictly in your browser's local storage and is sent directly from your device to Google's API. It is never stored on any server.
+          </div>
+
+          <div class="border-t border-zinc-800/80 pt-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-semibold text-zinc-300">Watchlist Cache</p>
+                <p class="text-[11px] text-zinc-500">Restore authentic 2026 seed stocks (XEQT, NVDA, AAPL, etc.)</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Reset watchlist to defaults (XEQT, NVDA, AAPL, MSFT, GOOGL, AMZN)?")) {
+                    store.resetToDefaultWatchlist();
+                    onClose();
+                  }
+                }}
+                class="rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-white transition"
+              >
+                Reset Watchlist
+              </button>
+            </div>
           </div>
         </div>
 
