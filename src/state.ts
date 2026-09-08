@@ -34,9 +34,9 @@ const STORAGE_KEY = "marketpulse_watchlist_v2";
 function loadPersistedWatchlist(): Stock[] | null {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return null;
+    if (data === null) return null;
     const parsed = JSON.parse(data);
-    if (Array.isArray(parsed) && parsed.length > 0) {
+    if (Array.isArray(parsed)) {
       return parsed;
     }
   } catch (err) {
@@ -60,9 +60,7 @@ class StockStore {
     stockRecords.slice(0, 6).map((s) => ({ ...s }));
 
   stocks = signal<Stock[]>(this.initialStocks);
-  selectedSymbols = signal<Set<string>>(
-    new Set([this.initialStocks[0]?.symbol || "XEQT"])
-  );
+  selectedSymbols = signal<Set<string>>(new Set<string>());
   viewMode = signal<ViewMode>("chart");
   chartTimeframe = signal<Timeframe>("1D");
   chartMetric = signal<ChartMetric>("price");
@@ -97,7 +95,7 @@ class StockStore {
     } catch {}
     const defaults = stockRecords.slice(0, 6).map((s) => ({ ...s }));
     this.stocks.value = defaults;
-    this.selectedSymbols.value = new Set([defaults[0]?.symbol || "XEQT"]);
+    this.selectedSymbols.value = new Set<string>();
     this.save();
   }
 
