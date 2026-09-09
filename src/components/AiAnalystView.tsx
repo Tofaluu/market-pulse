@@ -261,7 +261,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               type="text"
               value={customQuestion}
               onInput={(e) => setCustomQuestion((e.target as HTMLInputElement).value)}
-              placeholder={`Ask AI anything about ${stock.symbol} (e.g. Is XEQT good for long-term holding?)...`}
+              placeholder={`Ask AI anything about ${stock.symbol} (e.g. Is ${stock.symbol} good for long-term holding?)...`}
               class="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
             />
             <button
