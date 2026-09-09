@@ -187,7 +187,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
         )}
 
         {/* Quick Research Actions Grid */}
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <button
             type="button"
             onClick={() => handleRunAnalysis("summary")}
@@ -200,10 +200,29 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           >
             <div class="flex items-center gap-2">
               <span class="text-lg">🏢</span>
-              <span class="text-xs font-bold text-white">Company & Moat Overview</span>
+              <span class="text-xs font-bold text-white">Company & Moat</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
-              Core business model, competitive advantages, and market positioning.
+              Core business model, competitive moat, and target customers.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleRunAnalysis("past_week")}
+            disabled={isLoading}
+            class={`flex flex-col items-start rounded-xl border p-4 text-left transition ${
+              activeTopic === "past_week"
+                ? "border-violet-500 bg-violet-950/30 ring-1 ring-violet-500/50"
+                : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700 hover:bg-zinc-850/60"
+            }`}
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-lg">📰</span>
+              <span class="text-xs font-bold text-white">Past Week Drivers</span>
+            </div>
+            <p class="mt-1.5 text-[11px] text-zinc-400">
+              Why it moved this week: company news, politics, or macro shifts.
             </p>
           </button>
 
@@ -219,10 +238,10 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           >
             <div class="flex items-center gap-2">
               <span class="text-lg">🚀</span>
-              <span class="text-xs font-bold text-white">Future Trajectory & Catalysts</span>
+              <span class="text-xs font-bold text-white">Future Trajectory</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
-              Growth tailwinds, bull/bear cases, and 2-5 year potential roadmap.
+              Growth tailwinds, bull/bear cases, and 2-5 year roadmap.
             </p>
           </button>
 
@@ -238,10 +257,10 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           >
             <div class="flex items-center gap-2">
               <span class="text-lg">⚠️</span>
-              <span class="text-xs font-bold text-white">Key Risks & Headwinds</span>
+              <span class="text-xs font-bold text-white">Key Risks</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
-              Macro exposure, valuation risks, and industry challenges.
+              Macro exposure, valuation pressure, and critical threats.
             </p>
           </button>
         </div>
@@ -283,7 +302,9 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
                 Gemini 3.6 is analyzing {stock.symbol}...
               </span>
               <span class="text-[11px] text-zinc-500 mt-1">
-                Synthesizing financial reports & market trends
+                {activeTopic === "past_week"
+                  ? "Searching Google for past week news & events..."
+                  : "Synthesizing financial reports & market trends"}
               </span>
             </div>
           ) : analysisText ? (
@@ -292,6 +313,8 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
                 <span class="font-bold text-sm text-zinc-100 uppercase tracking-wider">
                   {activeTopic === "summary"
                     ? "Executive Overview"
+                    : activeTopic === "past_week"
+                    ? "Past Week Price Drivers & News"
                     : activeTopic === "trajectory"
                     ? "Trajectory & Catalyst Report"
                     : activeTopic === "risks"

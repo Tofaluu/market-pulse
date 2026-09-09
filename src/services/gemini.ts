@@ -205,7 +205,7 @@ function sanitizeAiResponse(text: string): string {
   return cleaned.trim();
 }
 
-export type AnalysisTopic = "summary" | "trajectory" | "risks" | "custom";
+export type AnalysisTopic = "summary" | "trajectory" | "risks" | "past_week" | "custom";
 
 /**
  * Conducts specialized, highly structured institutional AI research on a company or ETF.
@@ -220,11 +220,12 @@ export async function analyzeCompanyWithAI(
 IMPORTANT DIRECTIVES:
 - DO NOT include conversational filler, pleasantries, or phrases like "Here is...", "Below is...", or "Certainly!".
 - Jump directly into the first markdown header.
-- Maintain an institutional, concise, high-density equity research tone.
+- Maintain a concise, plain-English tone. Avoid unnecessary, confusing financial jargon.
 - Use bold lead-ins for every bullet point. Keep explanations focused and avoid fluffy filler.
 `;
 
   let prompt = "";
+  let useSearch = false;
 
   if (topic === "summary") {
     prompt = `You are a senior equity research analyst analyzing '${name}' (${symbol}).
@@ -245,6 +246,24 @@ Provide a structured, concise executive overview using EXACTLY this markdown lay
 
 ### **Executive Takeaway**
 [1 punchy sentence synthesizing their long-term competitive durability]`;
+  } else if (topic === "past_week") {
+    useSearch = true;
+    prompt = `You are a market analyst explaining why '${name}' (${symbol}) went up or down over the past 7 days.
+${commonDirectives}
+- USE PLAIN, STRAIGHTFORWARD ENGLISH. AVOID CONFUSING WALL STREET JARGON.
+- Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, or broader sector shifts from the past week.
+
+Provide a concise breakdown using EXACTLY this markdown layout:
+
+### **Past Week Price Movement**
+* **Direction & Sentiment:** [1 sentence explaining whether the stock rose, dropped, or remained flat over the past week, and the main market sentiment]
+
+### **Why It Moved (Past Week Drivers)**
+* **[Primary Company Driver]:** [1-2 simple, plain-English sentences on recent company news, earnings, product announcements, or leadership updates]
+* **[Macro, Political, or Sector Driver]:** [1-2 simple, plain-English sentences on political headlines, interest rate moves, or industry trends that affected it]
+
+### **Bottom Line**
+[1 punchy sentence stating whether this past week's price movement is short-term market noise or a meaningful fundamental shift]`;
   } else if (topic === "trajectory") {
     prompt = `You are a strategic financial analyst conducting a 2–5 year trajectory analysis for '${name}' (${symbol}).
 ${commonDirectives}
@@ -298,7 +317,7 @@ Provide a structured, objective response using EXACTLY this markdown layout:
 [1 concise takeaway sentence summarizing the practical implication for an investor]`;
   }
 
-  const raw = await callGemini(prompt, false);
+  const raw = await callGemini(prompt, useSearch);
   return sanitizeAiResponse(raw);
 }
 

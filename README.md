@@ -75,7 +75,7 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
 | **Batch AI Sync** | Single-click real-time price synchronization for your entire watchlist powered by Gemini AI with Google Search. |
 | **Dynamic Vector Chart** | Interactive SVG charting with hover crosshairs, exact price pill tooltips, volume statistics, and multi-timeframe toggling. |
 | **Fundamental Table** | Multi-year valuation history, Market Cap vs. Share Price metrics, and Year-over-Year (YoY) growth calculations. |
-| **AI Analyst Suite** | Executive overviews, forward catalysts, bull/bear outlooks, risk factors, and interactive freeform analyst Q&A. |
+| **AI Analyst Suite** | Executive overviews, past week news & price drivers, forward catalysts, risk audits, and interactive freeform analyst Q&A. |
 | **Global Directory** | Instant search and addition across 80+ prominent stocks and ETFs or any custom ticker with procedural profile generation. |
 | **Market Status Indicator** | Real-time badge tracking whether North American exchanges are currently open or closed. |
 
