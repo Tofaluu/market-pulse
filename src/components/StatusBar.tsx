@@ -5,7 +5,6 @@ import { store } from "../state";
 export function StatusBar() {
   const selected = store.selectedStock.value;
   const lastTick = store.lastMarketUpdate.value;
-  const isLive = store.isLive.value;
 
   return (
     <footer class="flex h-8 shrink-0 items-center justify-between border-t border-zinc-850 bg-zinc-950 px-4 text-xs text-zinc-400">
@@ -29,22 +28,18 @@ export function StatusBar() {
         )}
       </div>
 
-      {/* Streaming Clock & Market Feed Info */}
+      {/* Exchange Session Status & Timestamp */}
       <div class="hidden items-center gap-2 md:flex text-[11px] text-zinc-500">
         <span
           class={`h-2 w-2 rounded-full ${
             store.isMarketOpen.value
               ? "bg-emerald-400 animate-pulse"
-              : isLive
-              ? "bg-amber-400 animate-pulse"
               : "bg-rose-500"
           }`}
         />
         <span>
           {store.isMarketOpen.value
-            ? "TSX / NYSE Active (9:30 AM - 4:00 PM ET)"
-            : isLive
-            ? "Simulating Live Off-Hours Feed"
+            ? "TSX / NYSE Regular Session (9:30 AM - 4:00 PM ET)"
             : "Markets Closed • Official Closing Prices Held"}
         </span>
         <span>•</span>

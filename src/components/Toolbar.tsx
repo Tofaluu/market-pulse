@@ -17,7 +17,6 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const canSingle = store.hasSingleSelection.value;
   const mode = store.viewMode.value;
-  const isLive = store.isLive.value;
   const selectedCount = store.selectedCount.value;
 
   return (
@@ -39,7 +38,7 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
-          {/* Market Status (Open vs Closed) & Simulation Toggle */}
+          {/* Market Status (Open vs Closed) */}
           <div class="flex items-center gap-2">
             <div
               class={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
@@ -54,7 +53,7 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
               }
             >
               <span class="relative flex h-2 w-2">
-                {store.isMarketOpen.value && isLive && (
+                {store.isMarketOpen.value && (
                   <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 )}
                 <span
@@ -65,23 +64,6 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
               </span>
               <span>{store.isMarketOpen.value ? "MARKET OPEN" : "MARKET CLOSED"}</span>
             </div>
-
-            <button
-              type="button"
-              onClick={() => store.toggleLive()}
-              title={
-                isLive
-                  ? "Simulation active. Click to pause."
-                  : "Simulation paused. Click to simulate live market ticks."
-              }
-              class={`flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium transition ${
-                isLive
-                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-              }`}
-            >
-              <span>{isLive ? "⏸ Simulating" : "▶ Simulate"}</span>
-            </button>
           </div>
         </div>
 

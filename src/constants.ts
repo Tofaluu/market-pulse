@@ -5,12 +5,12 @@ export const APP_TITLE = "MarketPulse";
 
 export const WELCOME_TEXT = {
   title: "Welcome to MarketPulse",
-  subtitle: "High-performance real-time market tracker & portfolio visualization dashboard.",
+  subtitle: "Institutional-grade market tracker & equity research terminal.",
   supported: [
-    "Live real-time price updates with visual tick animations.",
-    "Interactive SVG line charts with crosshairs, tooltips, and timeframe toggles.",
-    "Comprehensive undo/redo command stack with full history support.",
-    "Filter and search stocks instantly from the global tech universe.",
+    "Live real-world price queries and batch portfolio synchronization via Gemini AI.",
+    "Interactive SVG vector charts with crosshairs, tooltips, and multi-timeframe toggles.",
+    "Comprehensive undo/redo command stack with full state persistence.",
+    "Directory of 80+ Canadian TSX & US equities with universal custom ticker creation.",
   ],
   shortcuts: [
     "Shift-A - add stock to watchlist",

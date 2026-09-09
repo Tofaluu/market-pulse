@@ -28,7 +28,7 @@
 
 **MarketPulse** is an institutional-grade, client-side financial analytics terminal designed for lightning-fast tracking, visualization, and equity research across North American stock exchanges (NYSE, NASDAQ, and TSX).
 
-Combining **Preact Signals** for direct fine-grained DOM updates with **Google Gemini 3.6 Flash** and **Google Search Grounding**, MarketPulse enables users to fetch real-world market prices, explore historical valuations, simulate active market fluctuations, and generate forward-looking institutional equity research reports in real time.
+Combining **Preact Signals** for direct fine-grained DOM updates with **Google Gemini 3.6 Flash** and **Google Search Grounding**, MarketPulse enables users to fetch real-world market prices, explore historical valuations, track authentic exchange trading sessions, and generate forward-looking institutional equity research reports in real time.
 
 🔗 **Live Application:** [https://tofaluu.github.io/market-pulse/](https://tofaluu.github.io/market-pulse/)
 
@@ -45,10 +45,10 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
   - **Risk & Headwind Analysis**: Macroeconomic, regulatory, and competitive threat audits.
   - **Interactive Financial Q&A**: Real-time contextual answering for any custom asset question.
 
-### ⏱️ Real-World Market Schedule & Simulation Engine
+### ⏱️ Real-World Market Schedule & Exchange Session Tracking
 - **Exchange Hours Detection**: Accurately tracks Eastern Time (ET) regular trading sessions (Mon–Fri, 9:30 AM – 4:00 PM ET).
-- **Off-Hours Price Freezing**: Automatically pauses artificial volatility when markets are closed, preserving official closing prices.
-- **Brownian Motion Random Walk**: Built-in Monte Carlo / Brownian motion generator that models realistic intraday price drifts, volume surges, high/low adjustments, and color-coded tick flashes during open market sessions or manual simulation.
+- **Official Closing Price Integrity**: Holds authentic exchange closing prices outside market hours with zero synthetic drift.
+- **Dynamic Session Badges**: Displays real-time status badges in the top toolbar and bottom status bar indicating whether NYSE, NASDAQ, and TSX markets are currently active or closed.
 
 ### 🇨🇦 First-Class Canadian (TSX) & US Equities Support
 - Native multi-currency formatting (`CAD` vs `USD`).
@@ -120,7 +120,7 @@ market-pulse/
 │   │   └── gemini.ts           # Gemini 3.6 Flash + Google Search Grounding service
 │   ├── constants.ts            # Application configuration & default text
 │   ├── format.ts               # Currency, percent change, and volume formatters
-│   ├── state.ts                # Centralized Preact Signals store & simulation
+│   ├── state.ts                # Centralized Preact Signals store & market schedule
 │   ├── stocks.ts               # Seed data records & realistic 2026 market baselines
 │   ├── tickerDatabase.ts       # Global ticker directory & procedural stock factory
 │   ├── undo.ts                 # Command Pattern undo/redo stack

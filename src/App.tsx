@@ -1,4 +1,4 @@
-﻿import { useEffect } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { StockDetails } from "./components/StockDetails";
 import { StatusBar } from "./components/StatusBar";
 import { StockList } from "./components/StockList";
@@ -30,7 +30,6 @@ export function App() {
     window.addEventListener("keydown", handler);
     return () => {
       window.removeEventListener("keydown", handler);
-      store.stopSimulation();
     };
   }, []);
 

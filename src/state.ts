@@ -65,25 +65,15 @@ class StockStore {
   chartTimeframe = signal<Timeframe>("1D");
   chartMetric = signal<ChartMetric>("price");
 
-  // Real-time market streaming simulation state (only active when market is open or manually enabled)
+  // Market session schedule (Mon-Fri 9:30 AM - 4:00 PM Eastern Time)
   isMarketOpen = signal<boolean>(isMarketOpen());
-  isLive = signal<boolean>(isMarketOpen());
-  simulationSpeed = signal<number>(2000);
   lastMarketUpdate = signal<string>(
-    isMarketOpen() ? new Date().toLocaleTimeString() : "4:00 PM ET (Market Close)"
+    isMarketOpen() ? "Regular Trading Session" : "4:00 PM ET (Market Close)"
   );
   searchQuery = signal<string>("");
 
   private undoManager = new UndoManager();
   private historyVersion = signal(0);
-  private timerId: number | null = null;
-  private flashTimers = new Map<string, number>();
-
-  constructor() {
-    if (this.isLive.value) {
-      this.startSimulation();
-    }
-  }
 
   save() {
     persistWatchlist(this.stocks.value);
@@ -165,108 +155,6 @@ class StockStore {
     this.searchQuery.value = query;
   }
 
-  // --- Live Market Simulation Engine ---
-
-  startSimulation() {
-    if (this.timerId !== null) return;
-    this.timerId = window.setInterval(() => {
-      if (!this.isLive.value) return;
-      this.tickSimulation();
-    }, this.simulationSpeed.value);
-  }
-
-  stopSimulation() {
-    if (this.timerId !== null) {
-      clearInterval(this.timerId);
-      this.timerId = null;
-    }
-  }
-
-  toggleLive() {
-    this.isLive.value = !this.isLive.value;
-    if (this.isLive.value && this.timerId === null) {
-      this.startSimulation();
-    }
-  }
-
-  setSimulationSpeed(ms: number) {
-    this.simulationSpeed.value = ms;
-    this.stopSimulation();
-    this.startSimulation();
-  }
-
-  private tickSimulation() {
-    const currentList = this.stocks.value;
-    if (currentList.length === 0) return;
-
-    // Pick 1 to 3 random stocks in the watchlist to update
-    const numToUpdate = Math.min(
-      currentList.length,
-      Math.floor(Math.random() * 3) + 1
-    );
-    const shuffledIndices = [...Array(currentList.length).keys()].sort(
-      () => 0.5 - Math.random()
-    );
-    const chosenIndices = new Set(shuffledIndices.slice(0, numToUpdate));
-
-    const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
-    this.lastMarketUpdate.value = timeStr;
-
-    const nextList = currentList.map((stock, idx) => {
-      if (!chosenIndices.has(idx)) return stock;
-
-      // Realistic Brownian motion: volatility delta between -0.45% and +0.45%
-      const volatility = 0.0035;
-      const pctDelta = (Math.random() - 0.49) * volatility * 2;
-      const rawDelta = stock.price * pctDelta;
-      const newPrice = Number(Math.max(0.5, stock.price + rawDelta).toFixed(2));
-      const newChange = Number((newPrice - stock.open).toFixed(2));
-      const newPctChange = Number(((newChange / stock.open) * 100).toFixed(2));
-      const direction: "up" | "down" = newPrice >= stock.price ? "up" : "down";
-
-      const newHigh = Math.max(stock.dayHigh, newPrice);
-      const newLow = Math.min(stock.dayLow, newPrice);
-      const volumeAdd = Math.floor(Math.random() * 15000 + 2500);
-
-      // Append real-time tick to intraday series
-      const updatedIntraday = [
-        ...stock.intraday.slice(-30),
-        { time: timeStr.slice(0, 5), price: newPrice },
-      ];
-
-      // Schedule flash removal
-      if (this.flashTimers.has(stock.symbol)) {
-        clearTimeout(this.flashTimers.get(stock.symbol)!);
-      }
-      const timeoutId = window.setTimeout(() => {
-        this.clearStockFlash(stock.symbol);
-      }, 700);
-      this.flashTimers.set(stock.symbol, timeoutId);
-
-      return {
-        ...stock,
-        price: newPrice,
-        change: newChange,
-        percentChange: newPctChange,
-        dayHigh: newHigh,
-        dayLow: newLow,
-        volume: stock.volume + volumeAdd,
-        flash: direction,
-        intraday: updatedIntraday,
-      };
-    });
-
-    this.stocks.value = nextList;
-  }
-
-  private clearStockFlash(symbol: string) {
-    this.stocks.value = this.stocks.value.map((s) =>
-      s.symbol === symbol ? { ...s, flash: null } : s
-    );
-    this.flashTimers.delete(symbol);
-  }
-
   updateStockPrice(
     symbol: string,
     newPrice: number,
@@ -274,6 +162,7 @@ class StockStore {
     newPctChange?: number
   ) {
     const cleanSymbol = symbol.trim().toUpperCase();
+    this.lastMarketUpdate.value = `Updated at ${new Date().toLocaleTimeString()}`;
     this.stocks.value = this.stocks.value.map((s) => {
       if (s.symbol !== cleanSymbol) return s;
 
@@ -313,6 +202,7 @@ class StockStore {
       { price: number; change?: number; percentChange?: number }
     >
   ) {
+    this.lastMarketUpdate.value = `Synced at ${new Date().toLocaleTimeString()}`;
     this.stocks.value = this.stocks.value.map((stock) => {
       const sym = stock.symbol.toUpperCase();
       const update =
