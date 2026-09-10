@@ -125,14 +125,46 @@ export async function callGemini(
 }
 
 /**
+ * Returns formatted date and time in Eastern Time (ET) to anchor AI searches.
+ */
+function getMarketDateContext(): { dateStr: string; timeStr: string } {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "America/New_York",
+  });
+  const timeStr = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  });
+  return { dateStr, timeStr };
+}
+
+/**
  * Uses Gemini with Google Search to fetch the genuine current trading price for any ticker.
  */
 export async function fetchLivePriceWithAI(
   symbol: string,
   name: string
 ): Promise<LivePriceResult> {
-  const prompt = `You are a real-time financial market data agent. Perform a Google Search to determine the current, up-to-date real-world trading price for the asset/stock ticker '${symbol}' (${name}).
-Look for current trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT).
+  const { dateStr, timeStr } = getMarketDateContext();
+  const prompt = `You are a real-time financial market data agent.
+TEMPORAL CONTEXT:
+- Today's date: ${dateStr}
+- Current Eastern Time: ${timeStr} ET
+
+Perform a Google Search to determine the current, up-to-date real-world trading price for the asset/stock ticker '${symbol}' (${name}).
+Look for trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT).
+
+CRITICAL PRICING RULES:
+1. DO NOT return the "Previous Close" (which is the closing price from the prior day).
+2. If the market is open, report the live trading price.
+3. If the market is closed or in after-hours, report TODAY'S official closing price (${dateStr} 4:00 PM ET close), NOT yesterday's close.
+4. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
 Provide the output strictly in this JSON format:
 {
@@ -248,10 +280,12 @@ Provide a structured, concise executive overview using EXACTLY this markdown lay
 [1 punchy sentence synthesizing their long-term competitive durability]`;
   } else if (topic === "past_week") {
     useSearch = true;
-    prompt = `You are a market analyst explaining why '${name}' (${symbol}) went up or down over the past 7 days.
+    const { dateStr } = getMarketDateContext();
+    prompt = `You are a market analyst explaining why '${name}' (${symbol}) went up or down over the past 7 days (the 7 days leading up to ${dateStr}).
 ${commonDirectives}
+- Today's Date is: ${dateStr}.
 - USE PLAIN, STRAIGHTFORWARD ENGLISH. AVOID CONFUSING WALL STREET JARGON.
-- Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, or broader sector shifts from the past week.
+- Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, or broader sector shifts from the past 7 days leading up to ${dateStr}.
 
 Provide a concise breakdown using EXACTLY this markdown layout:
 
@@ -334,9 +368,21 @@ export async function batchFetchLivePricesWithAI(
 ): Promise<BatchPriceResult> {
   if (stocks.length === 0) return {};
 
+  const { dateStr, timeStr } = getMarketDateContext();
   const stockListStr = stocks.map((s) => `${s.symbol} (${s.name})`).join(", ");
-  const prompt = `You are a financial market data agent. Perform a Google Search to find current, up-to-date real-world trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT, SHOP, RY) for these assets:
+  const prompt = `You are a financial market data agent.
+TEMPORAL CONTEXT:
+- Today's date: ${dateStr}
+- Current Eastern Time: ${timeStr} ET
+
+Perform a Google Search to find current, up-to-date real-world trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT, SHOP, RY) for these assets:
 ${stockListStr}
+
+CRITICAL PRICING RULES:
+1. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
+2. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
+3. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
+4. For Canadian assets (e.g. XEQT, SHOP.TO, RY.TO), fetch the price in CAD from TSX unless specified otherwise.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
