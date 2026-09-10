@@ -10,6 +10,7 @@ import {
   fetchLivePriceWithAI,
   hasGeminiApiKey,
   type BatchPriceResult,
+  type LivePriceResult,
   type ResolvedAsset,
 } from "./services/gemini";
 import { setLastSyncTimestamp } from "./services/smartSync";
@@ -323,11 +324,11 @@ class StockStore {
     }
   }
 
-  async syncSingleStock(symbol: string): Promise<boolean> {
+  async syncSingleStock(symbol: string): Promise<LivePriceResult | null> {
     const clean = symbol.trim().toUpperCase();
     const stock = this.stocks.value.find((s) => s.symbol === clean);
-    if (!stock) return false;
-    if (!hasGeminiApiKey()) return false;
+    if (!stock) return null;
+    if (!hasGeminiApiKey()) return null;
 
     const nextSyncing = new Set(this.syncingSymbols.value);
     nextSyncing.add(clean);
@@ -349,10 +350,10 @@ class StockStore {
         result.dayLow,
         result.currency
       );
-      return true;
+      return result;
     } catch (err) {
       console.warn(`Failed to live-sync price for ${clean}:`, err);
-      return false;
+      return null;
     } finally {
       const remaining = new Set(this.syncingSymbols.value);
       remaining.delete(clean);

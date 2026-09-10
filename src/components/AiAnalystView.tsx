@@ -40,12 +40,12 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const ok = await store.syncSingleStock(stock.symbol);
-      if (ok) {
+      const result = await store.syncSingleStock(stock.symbol);
+      if (result) {
         setLiveResult({
-          price: stock.price,
-          change: stock.change,
-          percentChange: stock.percentChange,
+          price: result.price,
+          change: result.change ?? 0,
+          percentChange: result.percentChange ?? 0,
           sourceText: "Verified live via Gemini AI & Google Search",
           timestamp: new Date().toLocaleTimeString(),
         });

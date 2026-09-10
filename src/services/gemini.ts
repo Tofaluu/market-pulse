@@ -161,7 +161,7 @@ export async function fetchLivePriceWithAI(
   const exchangeDesc =
     expectedCurrency === "CAD"
       ? "TSX (Toronto Stock Exchange) in Canadian Dollars (CAD)"
-      : "NASDAQ or NYSE in US Dollars (USD)";
+      : "major US exchanges (NASDAQ, NYSE, or OTC Markets / OTCMKTS) in US Dollars (USD)";
 
   const prompt = `You are a real-time financial market data agent.
 TEMPORAL CONTEXT:
@@ -172,7 +172,7 @@ Perform a Google Search to determine the current, up-to-date real-world trading 
 This asset trades natively on ${exchangeDesc}.
 
 CRITICAL PRICING & CURRENCY RULES:
-1. DATA SOURCE ANCHOR: Anchor directly to the official Google Finance (google.com/finance) quote box or official exchange feed (NYSE/NASDAQ/TSX).
+1. DATA SOURCE ANCHOR: Anchor directly to the official Google Finance (google.com/finance) quote box or official exchange feed (NYSE, NASDAQ, TSX, or OTCMKTS). For OTC ADRs (such as NTDOY, BYDDY, TCEHY), prioritize the official Google Finance OTCMKTS page (e.g. google.com/finance/quote/NTDOY:OTCMKTS).
 2. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
    - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
 3. DO NOT return the "Previous Close" (which is the closing price from the prior day).
@@ -501,10 +501,10 @@ TEMPORAL CONTEXT:
 
 The user wants to find and add this asset or company to their stock watchlist: "${clean}".
 
-Perform a Google Search to determine if this is a publicly traded company, ETF, or stock on major North American exchanges (NYSE, NASDAQ, TSX Toronto Stock Exchange):
+Perform a Google Search to determine if this is a publicly traded company, ETF, stock, or ADR on major North American exchanges (NYSE, NASDAQ, TSX Toronto Stock Exchange, or OTC Markets / OTCMKTS):
 1. Identify the official exchange ticker symbol.
    - For Canadian assets (e.g. Air Canada, Telus, Royal Bank, Canadian Pacific), use the TSX ticker (e.g. AC, T, RY, CP) and currency "CAD".
-   - For US assets (e.g. Apple, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US ticker (e.g. AAPL, TM, SONY, RACE, NVO) and currency "USD".
+   - For US assets and international ADRs (e.g. Apple, Nintendo, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US or OTC ticker (e.g. AAPL, NTDOY, TM, SONY, RACE, NVO) and currency "USD".
 2. Identify the full official company or fund name.
 3. Identify the sector or asset category.
 4. Retrieve the current trading price and daily price change in its native trading currency from Google Finance (google.com/finance) or the primary exchange. If after-hours or market closed, use today's official 4:00 PM regular session close.
