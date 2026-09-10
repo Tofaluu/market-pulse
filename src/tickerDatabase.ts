@@ -1,5 +1,6 @@
 // Extensive global ticker directory & universal dynamic stock generator.
 import type { Stock, Point, IntradayPoint } from "./stocks";
+import { getStockExpectedCurrency } from "./stocks";
 
 export type TickerInfo = {
   symbol: string;
@@ -190,6 +191,7 @@ export function createStockFromTicker(
     symbol: cleanSymbol,
     name,
     sector,
+    currency: getStockExpectedCurrency(cleanSymbol, sector),
     date: new Date().toISOString(),
     mcap: mcapStr,
     price,

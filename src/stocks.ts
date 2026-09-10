@@ -1,6 +1,27 @@
 export type Point = { year: number; mcap: number; price?: number };
 export type IntradayPoint = { time: string; price: number };
 
+export const CANADIAN_TSX_SYMBOLS = new Set([
+  "XEQT", "VEQT", "VFV", "XIC", "ZEB", "VDY", "XIU", "ZSP", "XAW", "VIU", "VEE",
+  "SHOP", "RY", "TD", "BNS", "BMO", "CM", "ENB", "TRP", "CNQ", "SU", "CP", "CNR",
+  "CSU", "ATD", "BCE", "T", "MFC", "SLF", "POW", "WCN", "GFL", "NTR", "ABX", "AEM"
+]);
+
+export function getStockExpectedCurrency(
+  symbol: string,
+  sector?: string,
+  explicitCurrency?: string
+): "USD" | "CAD" {
+  if (explicitCurrency === "CAD" || explicitCurrency === "USD") {
+    return explicitCurrency;
+  }
+  const clean = symbol.trim().toUpperCase();
+  if (clean.endsWith(".TO")) return "CAD";
+  if (CANADIAN_TSX_SYMBOLS.has(clean)) return "CAD";
+  if (sector && (sector.includes("Canadian") || sector.includes("TSX"))) return "CAD";
+  return "USD";
+}
+
 export type Stock = {
   name: string;
   symbol: string;

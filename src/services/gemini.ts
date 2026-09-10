@@ -1,4 +1,5 @@
 // Gemini 2.0 Flash AI Service with Google Search Grounding for live financial lookups & company research.
+import { getStockExpectedCurrency } from "../stocks";
 
 const API_KEY_STORAGE_KEY = "marketpulse_gemini_api_key";
 
@@ -34,6 +35,8 @@ export type LivePriceResult = {
   price: number;
   change?: number;
   percentChange?: number;
+  dayHigh?: number;
+  dayLow?: number;
   currency?: string;
   sourceText: string;
   timestamp: string;
@@ -149,29 +152,42 @@ function getMarketDateContext(): { dateStr: string; timeStr: string } {
  */
 export async function fetchLivePriceWithAI(
   symbol: string,
-  name: string
+  name: string,
+  explicitCurrency?: string,
+  sector?: string
 ): Promise<LivePriceResult> {
   const { dateStr, timeStr } = getMarketDateContext();
+  const expectedCurrency = getStockExpectedCurrency(symbol, sector, explicitCurrency);
+  const exchangeDesc =
+    expectedCurrency === "CAD"
+      ? "TSX (Toronto Stock Exchange) in Canadian Dollars (CAD)"
+      : "NASDAQ or NYSE in US Dollars (USD)";
+
   const prompt = `You are a real-time financial market data agent.
 TEMPORAL CONTEXT:
 - Today's date: ${dateStr}
 - Current Eastern Time: ${timeStr} ET
 
 Perform a Google Search to determine the current, up-to-date real-world trading price for the asset/stock ticker '${symbol}' (${name}).
-Look for trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT).
+This asset trades natively on ${exchangeDesc}.
 
-CRITICAL PRICING RULES:
-1. DO NOT return the "Previous Close" (which is the closing price from the prior day).
-2. If the market is open, report the live trading price.
-3. If the market is closed or in after-hours, report TODAY'S official closing price (${dateStr} 4:00 PM ET close), NOT yesterday's close.
-4. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
+CRITICAL PRICING & CURRENCY RULES:
+1. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
+   - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
+   - For example, Apple (AAPL) trades around ~$225-$235 USD—it must strictly be reported in USD, NEVER converted to Canadian dollars (~$318 CAD).
+2. DO NOT return the "Previous Close" (which is the closing price from the prior day).
+3. If the market is open, report the live trading price.
+4. If the market is closed or in after-hours, report TODAY'S official closing price (${dateStr} 4:00 PM ET close), NOT yesterday's close.
+5. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
 Provide the output strictly in this JSON format:
 {
-  "price": <numeric price, e.g. 34.65 or 255.50>,
-  "change": <numeric day change, e.g. +0.45 or -1.20>,
-  "percentChange": <numeric percent change, e.g. 1.32 or -0.50>,
-  "currency": <"USD" or "CAD">,
+  "price": <numeric price in ${expectedCurrency}, e.g. 229.70 or 34.82>,
+  "change": <numeric day change in ${expectedCurrency}, e.g. +1.49 or -0.35>,
+  "percentChange": <numeric percent change, e.g. 0.65 or -0.50>,
+  "dayHigh": <numeric day high in ${expectedCurrency}, e.g. 231.20>,
+  "dayLow": <numeric day low in ${expectedCurrency}, e.g. 227.10>,
+  "currency": "${expectedCurrency}",
   "summary": <one-sentence summary of today's price and market movement>
 }
 Output only the JSON block without markdown backticks if possible, or inside a clean json code block.`;
@@ -209,13 +225,19 @@ Output only the JSON block without markdown backticks if possible, or inside a c
     typeof parsed?.change === "number" ? parsed.change : undefined;
   const percentChange =
     typeof parsed?.percentChange === "number" ? parsed.percentChange : undefined;
-  const currency = parsed?.currency || (symbol.includes(".TO") || symbol === "XEQT" ? "CAD" : "USD");
+  const dayHigh =
+    typeof parsed?.dayHigh === "number" ? Number(parsed.dayHigh.toFixed(2)) : undefined;
+  const dayLow =
+    typeof parsed?.dayLow === "number" ? Number(parsed.dayLow.toFixed(2)) : undefined;
+  const currency = parsed?.currency || expectedCurrency;
 
   return {
     price: Number(price.toFixed(2)),
     change: change !== undefined ? Number(change.toFixed(2)) : undefined,
     percentChange:
       percentChange !== undefined ? Number(percentChange.toFixed(2)) : undefined,
+    dayHigh,
+    dayLow,
     currency,
     sourceText: parsed?.summary || raw.trim().slice(0, 200),
     timestamp: new Date().toLocaleTimeString(),
@@ -357,39 +379,57 @@ Provide a structured, objective response using EXACTLY this markdown layout:
 
 export type BatchPriceResult = Record<
   string,
-  { price: number; change?: number; percentChange?: number; currency?: string }
+  {
+    price: number;
+    change?: number;
+    percentChange?: number;
+    dayHigh?: number;
+    dayLow?: number;
+    currency?: string;
+  }
 >;
 
 /**
  * Uses Gemini with Google Search to fetch real-world quotes for all active stocks in one query.
  */
 export async function batchFetchLivePricesWithAI(
-  stocks: { symbol: string; name: string }[]
+  stocks: { symbol: string; name: string; currency?: string; sector?: string }[]
 ): Promise<BatchPriceResult> {
   if (stocks.length === 0) return {};
 
   const { dateStr, timeStr } = getMarketDateContext();
-  const stockListStr = stocks.map((s) => `${s.symbol} (${s.name})`).join(", ");
+  const stockListLines = stocks
+    .map((s) => {
+      const cur = getStockExpectedCurrency(s.symbol, s.sector, s.currency);
+      const exch = cur === "CAD" ? "TSX (Toronto Stock Exchange)" : "NASDAQ / NYSE";
+      return `- ${s.symbol} (${s.name}): REQUIRED CURRENCY = ${cur} (trades natively on ${exch})`;
+    })
+    .join("\n");
+
   const prompt = `You are a financial market data agent.
 TEMPORAL CONTEXT:
 - Today's date: ${dateStr}
 - Current Eastern Time: ${timeStr} ET
 
-Perform a Google Search to find current, up-to-date real-world trading prices on NYSE, NASDAQ, or TSX (Toronto Stock Exchange for Canadian assets like XEQT, SHOP, RY) for these assets:
-${stockListStr}
+Perform a Google Search to find current, up-to-date real-world trading prices for each of these assets:
+${stockListLines}
 
-CRITICAL PRICING RULES:
-1. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
-2. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
-3. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
-4. For Canadian assets (e.g. XEQT, SHOP.TO, RY.TO), fetch the price in CAD from TSX unless specified otherwise.
+CRITICAL PRICING & CURRENCY RULES:
+1. STRICT PER-ASSET NATIVE CURRENCIES:
+   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD! (For example, Apple AAPL trades around ~$225–$235 USD; it MUST NOT be converted to ~$318 CAD).
+   - For Canadian equities and ETFs (e.g. XEQT, SHOP, RY, VFV): Report strictly in CAD (Canadian Dollars).
+2. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
+3. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
+4. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
   "SYMBOL": {
-    "price": <numeric price>,
-    "change": <numeric day change>,
+    "price": <numeric price in requested native currency>,
+    "change": <numeric day change in native currency>,
     "percentChange": <numeric percent change>,
+    "dayHigh": <optional numeric day high in native currency>,
+    "dayLow": <optional numeric day low in native currency>,
     "currency": <"USD" or "CAD">
   }
 }`;
@@ -404,11 +444,23 @@ Provide output strictly in this JSON format without markdown wrapping:
     for (const [key, val] of Object.entries(parsed)) {
       const item = val as any;
       if (item && typeof item.price === "number") {
-        results[key.toUpperCase()] = {
+        const cleanKey = key.toUpperCase();
+        const matchedStock = stocks.find(
+          (s) => s.symbol.toUpperCase() === cleanKey || `${s.symbol.toUpperCase()}.TO` === cleanKey
+        );
+        const expectedCur = getStockExpectedCurrency(
+          matchedStock?.symbol || cleanKey,
+          matchedStock?.sector,
+          matchedStock?.currency
+        );
+
+        results[cleanKey] = {
           price: Number(item.price.toFixed(2)),
           change: typeof item.change === "number" ? Number(item.change.toFixed(2)) : undefined,
           percentChange: typeof item.percentChange === "number" ? Number(item.percentChange.toFixed(2)) : undefined,
-          currency: item.currency || "USD",
+          dayHigh: typeof item.dayHigh === "number" ? Number(item.dayHigh.toFixed(2)) : undefined,
+          dayLow: typeof item.dayLow === "number" ? Number(item.dayLow.toFixed(2)) : undefined,
+          currency: item.currency || expectedCur,
         };
       }
     }

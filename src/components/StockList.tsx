@@ -147,9 +147,12 @@ export function StockList() {
               >
                 {/* Top Row: Symbol, Name & Price */}
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-bold tracking-tight text-white">{stock.symbol}</span>
-                    <span class="max-w-[100px] truncate text-[11px] text-zinc-400">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="font-bold tracking-tight text-white shrink-0">{stock.symbol}</span>
+                    <span class="rounded bg-zinc-800/80 px-1 py-0.2 text-[9px] font-semibold text-zinc-400 shrink-0">
+                      {stock.currency || "USD"}
+                    </span>
+                    <span class="truncate text-[11px] text-zinc-400">
                       {stock.name}
                     </span>
                   </div>

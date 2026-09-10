@@ -10,6 +10,7 @@ import {
 } from "../format";
 import { store } from "../state";
 import type { Stock } from "../stocks";
+import { CANADIAN_TSX_SYMBOLS } from "../stocks";
 
 type ChartViewProps = {
   stock: Stock;
@@ -26,13 +27,7 @@ export function getTradingViewSymbol(symbol: string, sector?: string): string {
     return `TSX:${clean.replace(".TO", "")}`;
   }
 
-  const TSX_EQUITIES = [
-    "XEQT", "VEQT", "VFV", "XIC", "ZEB", "VDY", "XIU", "ZSP", "XAW", "VIU", "VEE",
-    "SHOP", "RY", "TD", "BNS", "BMO", "CM", "ENB", "TRP", "CNQ", "SU", "CP", "CNR",
-    "CSU", "ATD", "BCE", "T", "MFC", "SLF", "POW", "WCN", "GFL", "NTR", "ABX", "AEM"
-  ];
-
-  if (TSX_EQUITIES.includes(clean)) {
+  if (CANADIAN_TSX_SYMBOLS.has(clean)) {
     return `TSX:${clean}`;
   }
 
@@ -113,6 +108,9 @@ export function ChartView({ stock }: ChartViewProps) {
             <span class="rounded-md bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-zinc-300">
               {stock.symbol}
             </span>
+            <span class="rounded-md bg-zinc-900 border border-zinc-700/80 px-2 py-0.5 text-xs font-semibold text-zinc-300">
+              {stock.currency || "USD"}
+            </span>
             {stock.sector && (
               <span class="rounded-md bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                 {stock.sector}
@@ -142,9 +140,14 @@ export function ChartView({ stock }: ChartViewProps) {
               </div>
             ) : (
               <>
-                <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                  {formatPrice(stock.price)}
-                </span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+                    {formatPrice(stock.price)}
+                  </span>
+                  <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    {stock.currency || "USD"}
+                  </span>
+                </div>
                 <div
                   class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
                     isPositive ? "text-emerald-400" : "text-rose-400"
@@ -182,7 +185,7 @@ export function ChartView({ stock }: ChartViewProps) {
           <div>
             <div class="text-zinc-500">Day Range</div>
             <div class="font-semibold text-zinc-200">
-              ${stock.dayLow.toFixed(2)} - ${stock.dayHigh.toFixed(2)}
+              ${stock.dayLow.toFixed(2)} - ${stock.dayHigh.toFixed(2)} {stock.currency || "USD"}
             </div>
           </div>
           <div>
