@@ -116,12 +116,19 @@ export function Instructions({ multi }: InstructionsProps) {
             Key Features
           </div>
           <div class="grid grid-cols-1 gap-2 text-xs text-zinc-300">
-            {WELCOME_TEXT.supported.map((item) => (
-              <div key={item} class="flex items-center gap-2 rounded-lg bg-zinc-850/60 p-2 border border-zinc-800/80">
-                <span class="text-emerald-400">✓</span>
-                <span>{item}</span>
-              </div>
-            ))}
+            {WELCOME_TEXT.supported.map((item) => {
+              const [title, ...rest] = item.split(" - ");
+              const desc = rest.join(" - ");
+              return (
+                <div key={item} class="flex items-start gap-2.5 rounded-lg bg-zinc-850/60 p-2.5 border border-zinc-800/80">
+                  <span class="text-emerald-400 mt-0.5 font-bold">✓</span>
+                  <div class="leading-relaxed">
+                    <strong class="font-semibold text-zinc-100">{title}</strong>
+                    {desc && <span class="text-zinc-400"> – {desc}</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
