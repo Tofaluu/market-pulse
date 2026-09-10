@@ -24,6 +24,37 @@ export function formatYahooSymbol(
 }
 
 /**
+ * Production Cloudflare Worker CORS proxy for Yahoo Finance.
+ * Relays requests to query1.finance.yahoo.com and attaches open CORS headers.
+ */
+export const YAHOO_PROXY_BASE = "https://yahoo-proxy.samohtliu.workers.dev";
+
+/**
+ * Returns prioritized endpoint candidates based on current environment.
+ * On production (e.g. GitHub Pages), prioritize the Cloudflare Worker proxy to avoid 404s.
+ */
+function getYahooEndpoints(queryPath: string): string[] {
+  const isLocal =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
+
+  if (isLocal) {
+    return [
+      `/api/yahoo${queryPath}`,
+      `${YAHOO_PROXY_BASE}${queryPath}`,
+      `https://query1.finance.yahoo.com${queryPath}`,
+    ];
+  }
+
+  return [
+    `${YAHOO_PROXY_BASE}${queryPath}`,
+    `/api/yahoo${queryPath}`,
+    `https://query1.finance.yahoo.com${queryPath}`,
+  ];
+}
+
+/**
  * Fetches real-time price and day statistics from Yahoo Finance.
  * Uses the local Vite proxy (/api/yahoo) in development or direct fetch if available.
  */
@@ -35,11 +66,8 @@ export async function fetchYahooFinanceQuote(
   const formattedSymbol = formatYahooSymbol(symbol, sector, currency);
   const expectedCur = getStockExpectedCurrency(symbol, sector, currency);
 
-  // Endpoint candidates: local Vite proxy first, then direct
-  const endpoints = [
-    `/api/yahoo/v8/finance/chart/${encodeURIComponent(formattedSymbol)}?interval=1d`,
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(formattedSymbol)}?interval=1d`,
-  ];
+  const queryPath = `/v8/finance/chart/${encodeURIComponent(formattedSymbol)}?interval=1d`;
+  const endpoints = getYahooEndpoints(queryPath);
 
   for (const url of endpoints) {
     try {
@@ -202,10 +230,7 @@ export async function fetchYahooChartSeries(
   }
 
   const queryPath = `/v8/finance/chart/${encodeURIComponent(formattedSymbol)}?range=${yahooRange}&interval=${yahooInterval}`;
-  const endpoints = [
-    `/api/yahoo${queryPath}`,
-    `https://query1.finance.yahoo.com${queryPath}`,
-  ];
+  const endpoints = getYahooEndpoints(queryPath);
 
   for (const url of endpoints) {
     try {
