@@ -5,6 +5,8 @@ import type { Stock } from "./stocks";
 import { stockRecords, generateIntraday } from "./stocks";
 import { UndoManager, type Command } from "./undo";
 import { GLOBAL_TICKER_DIRECTORY, createStockFromTicker } from "./tickerDatabase";
+import { batchFetchLivePricesWithAI, fetchLivePriceWithAI, hasGeminiApiKey } from "./services/gemini";
+import { setLastSyncTimestamp } from "./services/smartSync";
 
 export type ViewMode = "chart" | "list" | "ai";
 export type Timeframe = "1D" | "1Y" | "5Y" | "ALL";
@@ -71,6 +73,11 @@ class StockStore {
     isMarketOpen() ? "Regular Trading Session" : "4:00 PM ET (Market Close)"
   );
   searchQuery = signal<string>("");
+
+  // Real-time AI Quote Synchronization state
+  syncingSymbols = signal<Set<string>>(new Set<string>());
+  isSyncingAll = signal<boolean>(false);
+  syncMessage = signal<string | null>(null);
 
   private undoManager = new UndoManager();
   private historyVersion = signal(0);
@@ -193,6 +200,7 @@ class StockStore {
         history: updatedHistory,
       };
     });
+    setLastSyncTimestamp();
     this.save();
   }
 
@@ -239,7 +247,74 @@ class StockStore {
         history: updatedHistory,
       };
     });
+    setLastSyncTimestamp();
     this.save();
+  }
+
+  isSyncing(symbol?: string): boolean {
+    if (this.isSyncingAll.value) return true;
+    if (!symbol) return this.syncingSymbols.value.size > 0;
+    return this.syncingSymbols.value.has(symbol.trim().toUpperCase());
+  }
+
+  async syncAllStocks(silent = false): Promise<boolean> {
+    if (!hasGeminiApiKey()) return false;
+    if (this.stocks.value.length === 0) return false;
+    if (this.isSyncingAll.value) return false;
+
+    this.isSyncingAll.value = true;
+    if (!silent) this.syncMessage.value = null;
+
+    try {
+      const results = await batchFetchLivePricesWithAI(this.stocks.value);
+      const count = Object.keys(results).length;
+      if (count > 0) {
+        this.batchUpdatePrices(results);
+        if (!silent) {
+          this.syncMessage.value = `✓ Synced ${count} stocks with live quotes`;
+        }
+        return true;
+      } else {
+        if (!silent) this.syncMessage.value = "No updates returned";
+        return false;
+      }
+    } catch (err: any) {
+      if (!silent) {
+        this.syncMessage.value = err?.message || "Sync failed";
+      }
+      return false;
+    } finally {
+      this.isSyncingAll.value = false;
+      if (!silent) {
+        setTimeout(() => {
+          this.syncMessage.value = null;
+        }, 4000);
+      }
+    }
+  }
+
+  async syncSingleStock(symbol: string): Promise<boolean> {
+    const clean = symbol.trim().toUpperCase();
+    const stock = this.stocks.value.find((s) => s.symbol === clean);
+    if (!stock) return false;
+    if (!hasGeminiApiKey()) return false;
+
+    const nextSyncing = new Set(this.syncingSymbols.value);
+    nextSyncing.add(clean);
+    this.syncingSymbols.value = nextSyncing;
+
+    try {
+      const result = await fetchLivePriceWithAI(stock.symbol, stock.name);
+      this.updateStockPrice(stock.symbol, result.price, result.change, result.percentChange);
+      return true;
+    } catch (err) {
+      console.warn(`Failed to live-sync price for ${clean}:`, err);
+      return false;
+    } finally {
+      const remaining = new Set(this.syncingSymbols.value);
+      remaining.delete(clean);
+      this.syncingSymbols.value = remaining;
+    }
   }
 
   // --- Undo/Redo & Watchlist Operations ---
@@ -291,6 +366,9 @@ class StockStore {
 
     const stock = createStockFromTicker(cleanSymbol, name, price, sector);
     this.addStock(stock);
+    if (hasGeminiApiKey()) {
+      this.syncSingleStock(stock.symbol);
+    }
   }
 
   addStockBySymbol(symbol: string) {
@@ -307,6 +385,9 @@ class StockStore {
     const existingInCatalog = stockRecords.find((s) => s.symbol === cleanSymbol);
     const stock = existingInCatalog ? { ...existingInCatalog } : createStockFromTicker(cleanSymbol);
     this.addStock(stock);
+    if (hasGeminiApiKey()) {
+      this.syncSingleStock(stock.symbol);
+    }
   }
 
   private addStock(stock: Stock) {

@@ -4,9 +4,13 @@ import { StatusBar } from "./components/StatusBar";
 import { StockList } from "./components/StockList";
 import { Toolbar } from "./components/Toolbar";
 import { store } from "./state";
+import { initSmartCatchUpSync } from "./services/smartSync";
 
 export function App() {
   useEffect(() => {
+    // Start automatic twice-daily catch-up sync engine (9:30 AM & 4:00 PM ET)
+    const cleanupSync = initSmartCatchUpSync();
+
     // Global keyboard shortcuts mirror toolbar actions.
     const handler = (event: KeyboardEvent) => {
       // Don't trigger shortcuts when typing inside search inputs
@@ -29,6 +33,7 @@ export function App() {
 
     window.addEventListener("keydown", handler);
     return () => {
+      cleanupSync();
       window.removeEventListener("keydown", handler);
     };
   }, []);

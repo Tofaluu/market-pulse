@@ -1,5 +1,5 @@
-// Modal dialog allowing users to search and add ANY stock or custom ticker to their watchlist.
 import { useMemo, useState } from "preact/hooks";
+import { formatPrice } from "../format";
 import { store } from "../state";
 import { GLOBAL_TICKER_DIRECTORY, type TickerInfo } from "../tickerDatabase";
 
@@ -185,7 +185,7 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
                     </span>
                   </div>
                   <p class="mt-1 text-[11px] text-zinc-400">
-                    Add "{cleanQuery}" with simulated market data & real-time streaming
+                    Add "{cleanQuery}" — live price will sync automatically
                   </p>
                 </div>
                 <button
@@ -218,6 +218,9 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
           ) : (
             filteredTickers.map((ticker) => {
               const inWatchlist = currentSymbols.has(ticker.symbol);
+              const watchlistStock = store.stocks.value.find(
+                (s) => s.symbol.toUpperCase() === ticker.symbol.toUpperCase()
+              );
               return (
                 <div
                   key={ticker.symbol}
@@ -234,14 +237,30 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
                   </div>
 
                   <div class="flex items-center gap-3">
-                    <div class="text-right">
-                      <div class="text-xs font-bold text-zinc-200">
-                        ${ticker.basePrice.toFixed(2)}
+                    {inWatchlist && watchlistStock ? (
+                      <div class="text-right">
+                        <div class="text-xs font-bold text-zinc-200">
+                          {formatPrice(watchlistStock.price)}
+                        </div>
+                        <div
+                          class={`text-[10px] font-semibold ${
+                            watchlistStock.change >= 0 ? "text-emerald-400" : "text-rose-400"
+                          }`}
+                        >
+                          {watchlistStock.change >= 0 ? "+" : ""}
+                          {watchlistStock.change.toFixed(2)} ({watchlistStock.percentChange.toFixed(2)}%)
+                        </div>
                       </div>
-                      <div class="text-[10px] text-zinc-500">
-                        MCap: ${ticker.baseMcap}B
+                    ) : (
+                      <div class="text-right">
+                        <div class="text-xs font-semibold text-zinc-500 tabular-nums">
+                          —
+                        </div>
+                        <div class="text-[10px] text-zinc-500 font-medium">
+                          Syncs on add
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <button
                       type="button"

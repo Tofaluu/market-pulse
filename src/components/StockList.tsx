@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { formatPercentChange, formatPrice } from "../format";
 import { store } from "../state";
-import { batchFetchLivePricesWithAI, hasGeminiApiKey } from "../services/gemini";
+import { hasGeminiApiKey } from "../services/gemini";
 import { AiSettingsModal } from "./AiSettingsModal";
 
 type StockListProps = {
@@ -14,33 +14,16 @@ export function StockList({ onBackgroundClick }: StockListProps) {
   const searchQuery = store.searchQuery.value;
 
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const isSyncing = store.isSyncingAll.value;
+  const syncMessage = store.syncMessage.value;
 
-  const handleSyncAll = async () => {
+  const handleSyncAll = () => {
     if (!hasGeminiApiKey()) {
       setIsAiSettingsOpen(true);
       return;
     }
     if (store.stocks.value.length === 0) return;
-
-    setIsSyncing(true);
-    setSyncMessage(null);
-    try {
-      const results = await batchFetchLivePricesWithAI(store.stocks.value);
-      const count = Object.keys(results).length;
-      if (count > 0) {
-        store.batchUpdatePrices(results);
-        setSyncMessage(`✓ Synced ${count} stocks with live quotes`);
-      } else {
-        setSyncMessage("No updates returned");
-      }
-    } catch (err: any) {
-      setSyncMessage(err?.message || "Sync failed");
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncMessage(null), 4000);
-    }
+    store.syncAllStocks();
   };
 
   return (
@@ -188,17 +171,27 @@ export function StockList({ onBackgroundClick }: StockListProps) {
                   </div>
 
                   <div class="text-right">
-                    <span
-                      class={`text-xs font-semibold tabular-nums transition-colors ${
-                        stock.flash === "up"
-                          ? "text-emerald-400 font-bold"
-                          : stock.flash === "down"
-                          ? "text-rose-400 font-bold"
-                          : "text-zinc-100"
-                      }`}
-                    >
-                      {formatPrice(stock.price)}
-                    </span>
+                    {store.isSyncing(stock.symbol) ? (
+                      <span class="inline-flex items-center gap-1 text-[11px] font-medium text-violet-400 animate-pulse">
+                        <svg class="h-2.5 w-2.5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Syncing...</span>
+                      </span>
+                    ) : (
+                      <span
+                        class={`text-xs font-semibold tabular-nums transition-colors ${
+                          stock.flash === "up"
+                            ? "text-emerald-400 font-bold"
+                            : stock.flash === "down"
+                            ? "text-rose-400 font-bold"
+                            : "text-zinc-100"
+                        }`}
+                      >
+                        {formatPrice(stock.price)}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -217,16 +210,22 @@ export function StockList({ onBackgroundClick }: StockListProps) {
                   </svg>
 
                   {/* Change badge */}
-                  <div
-                    class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
-                      isPositive
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-rose-500/10 text-rose-400"
-                    }`}
-                  >
-                    <span>{formatPercentChange(stock.percentChange)}</span>
-                    <span>{isPositive ? "↑" : "↓"}</span>
-                  </div>
+                  {store.isSyncing(stock.symbol) ? (
+                    <div class="rounded-md px-1.5 py-0.5 text-[10px] font-medium text-violet-300 bg-violet-500/15">
+                      Syncing...
+                    </div>
+                  ) : (
+                    <div
+                      class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
+                        isPositive
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : "bg-rose-500/10 text-rose-400"
+                      }`}
+                    >
+                      <span>{formatPercentChange(stock.percentChange)}</span>
+                      <span>{isPositive ? "↑" : "↓"}</span>
+                    </div>
+                  )}
                 </div>
               </button>
             );

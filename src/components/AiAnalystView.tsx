@@ -3,7 +3,6 @@ import { marked } from "marked";
 import { formatPercentChange, formatPrice, formatSignedChange } from "../format";
 import {
   analyzeCompanyWithAI,
-  fetchLivePriceWithAI,
   getGeminiApiKey,
   type AnalysisTopic,
   type LivePriceResult,
@@ -41,14 +40,18 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const result = await fetchLivePriceWithAI(stock.symbol, stock.name);
-      setLiveResult(result);
-      store.updateStockPrice(
-        stock.symbol,
-        result.price,
-        result.change,
-        result.percentChange
-      );
+      const ok = await store.syncSingleStock(stock.symbol);
+      if (ok) {
+        setLiveResult({
+          price: stock.price,
+          change: stock.change,
+          percentChange: stock.percentChange,
+          sourceText: "Verified live via Gemini AI & Google Search",
+          timestamp: new Date().toLocaleTimeString(),
+        });
+      } else {
+        setErrorMsg("Failed to fetch live price via AI");
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to fetch live price via AI");
     } finally {
@@ -108,23 +111,38 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             </div>
 
             <div class="mt-2 flex items-baseline gap-3">
-              <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                {formatPrice(stock.price)}
-              </span>
-              <div
-                class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
-                  stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
-                }`}
-              >
-                <span>
-                  {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
-                </span>
-                <span>{stock.change >= 0 ? "↑" : "↓"}</span>
-              </div>
-              {liveResult && (
-                <span class="text-xs text-emerald-400">
-                  • Verified live at {liveResult.timestamp}
-                </span>
+              {store.isSyncing(stock.symbol) ? (
+                <div class="flex items-center gap-2.5">
+                  <span class="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-violet-400 animate-pulse">
+                    <svg class="h-5 w-5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Syncing live price...
+                  </span>
+                  <span class="text-xs text-zinc-500">Querying real-time quote via Gemini</span>
+                </div>
+              ) : (
+                <>
+                  <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+                    {formatPrice(stock.price)}
+                  </span>
+                  <div
+                    class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
+                      stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    <span>
+                      {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
+                    </span>
+                    <span>{stock.change >= 0 ? "↑" : "↓"}</span>
+                  </div>
+                  {liveResult && (
+                    <span class="text-xs text-emerald-400">
+                      • Verified live at {liveResult.timestamp}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
