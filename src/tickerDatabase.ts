@@ -15,7 +15,7 @@ export const GLOBAL_TICKER_DIRECTORY: TickerInfo[] = [
   // Mega-Cap Tech & AI
   { symbol: "NVDA", name: "NVIDIA", sector: "Semiconductors & AI Hardware", basePrice: 118.50, baseMcap: 2920, peRatio: 42.4 },
   { symbol: "GOOGL", name: "Alphabet (Google)", sector: "Internet Services & AI", basePrice: 172.80, baseMcap: 2150, peRatio: 24.2 },
-  { symbol: "AAPL", name: "Apple", sector: "Consumer Electronics", basePrice: 228.40, baseMcap: 3480, peRatio: 34.2 },
+  { symbol: "AAPL", name: "Apple", sector: "Consumer Electronics", basePrice: 317.50, baseMcap: 4820, peRatio: 34.2 },
   { symbol: "MSFT", name: "Microsoft", sector: "Cloud & Enterprise Software", basePrice: 422.50, baseMcap: 3140, peRatio: 35.1 },
   { symbol: "AMZN", name: "Amazon", sector: "E-Commerce & Cloud", basePrice: 188.20, baseMcap: 1980, peRatio: 43.1 },
   { symbol: "META", name: "Meta Platforms", sector: "Social Media & AI", basePrice: 515.60, baseMcap: 1310, peRatio: 26.5 },

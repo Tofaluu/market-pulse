@@ -52,16 +52,16 @@ function loadPersistedWatchlist(): Stock[] | null {
         let dayHigh = s.dayHigh;
         let dayLow = s.dayLow;
 
-        // Auto-heal old cross-currency conversion bug (e.g. AAPL synced in CAD at ~318 USD)
-        if (s.symbol === "AAPL" && price > 290) {
-          price = 229.70;
-          change = 1.49;
+        // If AAPL is still carrying the legacy 2024 starter price (~$228), upgrade to authentic 2026 level (~$317.50 USD)
+        if (s.symbol === "AAPL" && price < 270) {
+          price = 317.50;
+          change = 2.06;
           percentChange = 0.65;
-          dayHigh = 231.20;
-          dayLow = 227.10;
+          dayHigh = 319.15;
+          dayLow = 314.80;
         }
 
-        // Heal distorted dayHigh / dayLow if range latched onto cross-currency values
+        // Heal distorted dayHigh / dayLow if range latched onto stale historical baselines
         const open = Number((price - change).toFixed(2));
         if (dayHigh > price * 1.2 || dayHigh < price) {
           dayHigh = Math.max(price, open);

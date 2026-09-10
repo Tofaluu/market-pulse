@@ -174,7 +174,6 @@ This asset trades natively on ${exchangeDesc}.
 CRITICAL PRICING & CURRENCY RULES:
 1. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
    - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
-   - For example, Apple (AAPL) trades around ~$225-$235 USD—it must strictly be reported in USD, NEVER converted to Canadian dollars (~$318 CAD).
 2. DO NOT return the "Previous Close" (which is the closing price from the prior day).
 3. If the market is open, report the live trading price.
 4. If the market is closed or in after-hours, report TODAY'S official closing price (${dateStr} 4:00 PM ET close), NOT yesterday's close.
@@ -182,11 +181,11 @@ CRITICAL PRICING & CURRENCY RULES:
 
 Provide the output strictly in this JSON format:
 {
-  "price": <numeric price in ${expectedCurrency}, e.g. 229.70 or 34.82>,
-  "change": <numeric day change in ${expectedCurrency}, e.g. +1.49 or -0.35>,
+  "price": <numeric price in ${expectedCurrency}, e.g. 317.50 or 45.45>,
+  "change": <numeric day change in ${expectedCurrency}, e.g. +2.05 or -0.35>,
   "percentChange": <numeric percent change, e.g. 0.65 or -0.50>,
-  "dayHigh": <numeric day high in ${expectedCurrency}, e.g. 231.20>,
-  "dayLow": <numeric day low in ${expectedCurrency}, e.g. 227.10>,
+  "dayHigh": <numeric day high in ${expectedCurrency}, e.g. 319.15>,
+  "dayLow": <numeric day low in ${expectedCurrency}, e.g. 314.80>,
   "currency": "${expectedCurrency}",
   "summary": <one-sentence summary of today's price and market movement>
 }
@@ -416,7 +415,7 @@ ${stockListLines}
 
 CRITICAL PRICING & CURRENCY RULES:
 1. STRICT PER-ASSET NATIVE CURRENCIES:
-   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD! (For example, Apple AAPL trades around ~$225–$235 USD; it MUST NOT be converted to ~$318 CAD).
+   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD!
    - For Canadian equities and ETFs (e.g. XEQT, SHOP, RY, VFV): Report strictly in CAD (Canadian Dollars).
 2. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
 3. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
