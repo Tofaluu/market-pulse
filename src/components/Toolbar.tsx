@@ -135,7 +135,7 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
-          {/* View Mode Segmented Controls (Chart, Table, AI Analyst) */}
+          {/* View Mode Segmented Controls (Chart, AI Analyst) */}
           <div class="flex items-center rounded-lg border border-zinc-800 bg-zinc-950/80 p-0.5">
             <button
               type="button"
@@ -151,22 +151,6 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
               </svg>
               <span>Chart</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => store.setViewMode("list")}
-              disabled={!canSingle}
-              class={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition ${
-                mode === "list" && canSingle
-                  ? "bg-zinc-800 text-white shadow"
-                  : "text-zinc-400 hover:text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-650"
-              }`}
-            >
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              <span>Table</span>
             </button>
 
             <button

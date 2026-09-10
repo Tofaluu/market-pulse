@@ -13,7 +13,7 @@ import {
 } from "./services/gemini";
 import { setLastSyncTimestamp } from "./services/smartSync";
 
-export type ViewMode = "chart" | "list" | "ai";
+export type ViewMode = "chart" | "ai";
 export type Timeframe = "1D" | "1Y" | "5Y" | "ALL";
 export type ChartMetric = "price" | "mcap";
 

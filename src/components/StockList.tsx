@@ -115,22 +115,6 @@ export function StockList() {
             const selected = store.isSelected(stock.symbol);
             const isPositive = stock.change >= 0;
 
-            // Generate miniature SVG sparkline from intraday prices
-            const sparkPoints = stock.intraday || [];
-            const prices = sparkPoints.map((p) => p.price);
-            const minP = Math.min(...prices);
-            const maxP = Math.max(...prices);
-            const sparkW = 60;
-            const sparkH = 22;
-            const polylinePoints = prices
-              .map((p, idx) => {
-                const x = (idx / Math.max(1, prices.length - 1)) * sparkW;
-                const range = maxP - minP || 1;
-                const y = sparkH - ((p - minP) / range) * (sparkH - 4) - 2;
-                return `${x.toFixed(1)},${y.toFixed(1)}`;
-              })
-              .join(" ");
-
             return (
               <button
                 key={stock.symbol}
@@ -145,16 +129,16 @@ export function StockList() {
                   event.stopPropagation();
                 }}
               >
-                {/* Top Row: Symbol, Name & Price */}
-                <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-1.5 min-w-0">
+                {/* Top Row: Symbol, Currency Badge & Current Price */}
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
                     <span class="font-bold tracking-tight text-white">{stock.symbol}</span>
-                    <span class="max-w-[115px] truncate text-[11px] text-zinc-400">
-                      {stock.name}
+                    <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-semibold text-zinc-400">
+                      {stock.currency || "USD"}
                     </span>
                   </div>
 
-                  <div class="text-right shrink-0">
+                  <div class="text-right">
                     {store.isSyncing(stock.symbol) ? (
                       <span class="inline-flex items-center gap-1 text-[11px] font-medium text-violet-400 animate-pulse">
                         <svg class="h-2.5 w-2.5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
@@ -175,37 +159,30 @@ export function StockList() {
                   </div>
                 </div>
 
-                {/* Bottom Row: Sparkline & Change Badge */}
-                <div class="mt-2 flex items-center justify-between">
-                  {/* Inline Sparkline */}
-                  <svg width={sparkW} height={sparkH} class="overflow-visible">
-                    <polyline
-                      fill="none"
-                      stroke={isPositive ? "#10b981" : "#f43f5e"}
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      points={polylinePoints}
-                    />
-                  </svg>
+                {/* Bottom Row: Full Company Name & Performance Badge */}
+                <div class="mt-1.5 flex items-center justify-between gap-2">
+                  <span class="truncate text-[11px] font-medium text-zinc-400">
+                    {stock.name}
+                  </span>
 
-                  {/* Change badge */}
-                  {store.isSyncing(stock.symbol) ? (
-                    <div class="rounded-md px-1.5 py-0.5 text-[10px] font-medium text-violet-300 bg-violet-500/15">
-                      Syncing...
-                    </div>
-                  ) : (
-                    <div
-                      class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
-                        isPositive
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-rose-500/10 text-rose-400"
-                      }`}
-                    >
-                      <span>{formatPercentChange(stock.percentChange)}</span>
-                      <span>{isPositive ? "↑" : "↓"}</span>
-                    </div>
-                  )}
+                  <div class="shrink-0">
+                    {store.isSyncing(stock.symbol) ? (
+                      <div class="rounded-md px-1.5 py-0.5 text-[10px] font-medium text-violet-300 bg-violet-500/15">
+                        Syncing...
+                      </div>
+                    ) : (
+                      <div
+                        class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
+                          isPositive
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-rose-500/10 text-rose-400"
+                        }`}
+                      >
+                        <span>{formatPercentChange(stock.percentChange)}</span>
+                        <span>{isPositive ? "↑" : "↓"}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </button>
             );
