@@ -48,7 +48,7 @@ export function App() {
       />
 
       <section class="flex min-h-0 flex-1">
-        <StockList onBackgroundClick={() => store.clearSelection()} />
+        <StockList />
         <StockDetails />
       </section>
 

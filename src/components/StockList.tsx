@@ -4,11 +4,7 @@ import { store } from "../state";
 import { hasGeminiApiKey } from "../services/gemini";
 import { AiSettingsModal } from "./AiSettingsModal";
 
-type StockListProps = {
-  onBackgroundClick: () => void;
-};
-
-export function StockList({ onBackgroundClick }: StockListProps) {
+export function StockList() {
   const stocks = store.filteredStocks.value;
   const totalCount = store.stocks.value.length;
   const searchQuery = store.searchQuery.value;
@@ -27,12 +23,7 @@ export function StockList({ onBackgroundClick }: StockListProps) {
   };
 
   return (
-    <aside
-      class="flex h-full w-[310px] shrink-0 flex-col border-r border-zinc-800 bg-zinc-950"
-      onClick={(event) => {
-        if (event.currentTarget === event.target) onBackgroundClick();
-      }}
-    >
+    <aside class="flex h-full w-[310px] shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
       {/* Search & Watchlist Header */}
       <div class="border-b border-zinc-850 p-3 bg-zinc-900/40">
         <div class="mb-2 flex items-center justify-between text-xs">
@@ -112,12 +103,7 @@ export function StockList({ onBackgroundClick }: StockListProps) {
       </div>
 
       {/* Stock Cards List */}
-      <div
-        class="flex-1 overflow-y-auto p-2 space-y-1.5"
-        onClick={(event) => {
-          if (event.currentTarget === event.target) onBackgroundClick();
-        }}
-      >
+      <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
         {stocks.length === 0 ? (
           <div class="p-6 text-center text-xs text-zinc-500">
             {totalCount === 0
