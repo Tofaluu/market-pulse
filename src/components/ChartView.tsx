@@ -77,7 +77,7 @@ export function ChartView({ stock }: ChartViewProps) {
       interval: "D",
       timezone: "America/New_York",
       theme: "dark",
-      style: "1", // 1 = Real Japanese Candlesticks
+      style: "3", // 3 = Sleek Area chart with gradient fill
       locale: "en",
       enable_publishing: false,
       allow_symbol_change: false,
