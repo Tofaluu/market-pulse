@@ -2,11 +2,9 @@
 // Connects directly to real exchange feeds (NYSE, NASDAQ, TSX) across all timeframes.
 import { useEffect, useRef } from "preact/hooks";
 import {
-  formatMarketCapFromString,
   formatPercentChange,
   formatPrice,
   formatSignedChange,
-  formatVolume,
 } from "../format";
 import { store } from "../state";
 import type { Stock } from "../stocks";
@@ -173,28 +171,6 @@ export function ChartView({ stock }: ChartViewProps) {
               <span>🤖</span>
               <span>AI Research & Live Check</span>
             </button>
-          </div>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div class="grid grid-cols-2 gap-x-6 gap-y-1 rounded-xl border border-zinc-850 bg-zinc-900/50 p-3 text-xs sm:grid-cols-4">
-          <div>
-            <div class="text-zinc-500">Market Cap</div>
-            <div class="font-semibold text-zinc-200">{formatMarketCapFromString(stock.mcap)}</div>
-          </div>
-          <div>
-            <div class="text-zinc-500">Day Range</div>
-            <div class="font-semibold text-zinc-200">
-              ${stock.dayLow.toFixed(2)} - ${stock.dayHigh.toFixed(2)} {stock.currency || "USD"}
-            </div>
-          </div>
-          <div>
-            <div class="text-zinc-500">Volume</div>
-            <div class="font-semibold text-zinc-200">{formatVolume(stock.volume)}</div>
-          </div>
-          <div>
-            <div class="text-zinc-500">P/E Ratio</div>
-            <div class="font-semibold text-zinc-200">{stock.peRatio ?? "N/A"}</div>
           </div>
         </div>
       </div>
