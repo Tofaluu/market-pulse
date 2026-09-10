@@ -22,6 +22,9 @@
   <img src="https://img.shields.io/badge/Markets-NYSE_•_NASDAQ_•_TSX-amber?style=flat-square" alt="Markets Supported" />
 </p>
 
+> 🚀 **Live Web Application:** [https://tofaluu.github.io/market-pulse/](https://tofaluu.github.io/market-pulse/)  
+> *(Runs entirely in your browser — zero installation or setup required)*
+
 ---
 
 ## 🌟 Overview
@@ -30,15 +33,16 @@
 
 Combining **Preact Signals** for direct fine-grained DOM updates with **Google Gemini 3.6 Flash** and **Google Search Grounding**, MarketPulse enables users to fetch real-world market prices, explore historical valuations, track authentic exchange trading sessions, and generate forward-looking institutional equity research reports in real time.
 
-🔗 **Live Application:** [https://tofaluu.github.io/market-pulse/](https://tofaluu.github.io/market-pulse/)
-
 ---
 
 ## ⚡ Core Engineering Highlights
 
 ### 🤖 Gemini AI Research & Live Grounding Engine
 - **Search-Grounded Price Verification**: Queries real-time trading quotes from public financial feeds across NYSE, NASDAQ, and the Toronto Stock Exchange (TSX) using Google Search Grounding.
-- **Batch AI Synchronization**: Refresh an entire portfolio of stocks simultaneously with a single click (**"✨ Sync All"**), automatically updating 1D intraday curves and 2026 valuation benchmarks.
+- **Smart Catch-Up Synchronization**: Serverless schedule detection that automatically syncs quotes at 9:30 AM ET (Market Open) and 4:00 PM ET (Market Close) upon opening the tab or via an active background timer, with zero ongoing backend hosting costs.
+- **Automatic Live Sync on Add**: Adding any stock or ETF instantly triggers an individual search-grounded quote synchronization in the background.
+- **Batch AI Synchronization**: Refresh an entire portfolio of stocks simultaneously with a single click (**"✨ Sync All"**), automatically updating 1D intraday curves and valuation benchmarks.
+- **Past Week Price Drivers**: Plain-English, jargon-free breakdown of why a stock moved over the past 7 days (earnings, company announcements, macroeconomic or political shifts).
 - **Institutional Equity Research**: Instant generation of structured analyst overviews:
   - **Business & Fund Model**: Revenue drivers, margins, and ETF asset allocation breakdowns (e.g., `XEQT`, `VEQT`).
   - **Growth Catalysts & Trajectory**: Bull/bear scenarios and forward 2–5 year tailwinds.
@@ -47,7 +51,7 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
 
 ### ⏱️ Real-World Market Schedule & Exchange Session Tracking
 - **Exchange Hours Detection**: Accurately tracks Eastern Time (ET) regular trading sessions (Mon–Fri, 9:30 AM – 4:00 PM ET).
-- **Official Closing Price Integrity**: Holds authentic exchange closing prices outside market hours with zero synthetic drift.
+- **Official Closing Price Integrity**: Anchors temporal search prompts to Eastern Time and enforces negative constraints against "Previous Close" snippets to guarantee authentic session close quotes.
 - **Dynamic Session Badges**: Displays real-time status badges in the top toolbar and bottom status bar indicating whether NYSE, NASDAQ, and TSX markets are currently active or closed.
 
 ### 🇨🇦 First-Class Canadian (TSX) & US Equities Support
@@ -63,7 +67,7 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
 
 ### 💾 Robust Client-Side Persistence & Command Pattern History
 - Watchlist customizations, added stocks, deleted entries, and verified live prices persist automatically in browser `localStorage`.
-- Comprehensive Command Pattern (`execute`, `undo`, `redo`) isolates user changes from background market ticks, enabling seamless keyboard-driven `Shift+U` (undo) and `Shift+R` (redo).
+- Comprehensive Command Pattern (`execute`, `undo`, `redo`) enables seamless keyboard-driven `Shift+U` (undo) and `Shift+R` (redo).
 
 ---
 
@@ -71,12 +75,12 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
 
 | Feature | Capabilities |
 | :--- | :--- |
-| **Real-Time Watchlist** | Monitor unlimited stocks with live price updates, intraday sparklines, and directional price flash animations. |
-| **Batch AI Sync** | Single-click real-time price synchronization for your entire watchlist powered by Gemini AI with Google Search. |
+| **Real-Time Watchlist** | Monitor unlimited stocks with live price updates, intraday sparklines, and synchronized gain/loss indicators. |
+| **Batch & Auto Sync** | Automatic twice-daily catch-up sync at market open & close, plus one-click portfolio refresh powered by Gemini AI with Google Search. |
 | **Dynamic Vector Chart** | Interactive SVG charting with hover crosshairs, exact price pill tooltips, volume statistics, and multi-timeframe toggling. |
 | **Fundamental Table** | Multi-year valuation history, Market Cap vs. Share Price metrics, and Year-over-Year (YoY) growth calculations. |
 | **AI Analyst Suite** | Executive overviews, past week news & price drivers, forward catalysts, risk audits, and interactive freeform analyst Q&A. |
-| **Global Directory** | Instant search and addition across 80+ prominent stocks and ETFs or any custom ticker with procedural profile generation. |
+| **Global Directory** | Instant search and addition across 80+ prominent stocks and ETFs or custom tickers, featuring unadded quote placeholders and automatic live synchronization on add. |
 | **Market Status Indicator** | Real-time badge tracking whether North American exchanges are currently open or closed. |
 
 ---
@@ -117,7 +121,8 @@ market-pulse/
 │   │   ├── StockList.tsx       # Watchlist sidebar with search & sparklines
 │   │   └── Toolbar.tsx         # Top application header & market status badge
 │   ├── services/
-│   │   └── gemini.ts           # Gemini 3.6 Flash + Google Search Grounding service
+│   │   ├── gemini.ts           # Gemini 3.6 Flash + Google Search Grounding service
+│   │   └── smartSync.ts        # Automated twice-daily market milestone catch-up sync
 │   ├── constants.ts            # Application configuration & default text
 │   ├── format.ts               # Currency, percent change, and volume formatters
 │   ├── state.ts                # Centralized Preact Signals store & market schedule
@@ -134,13 +139,15 @@ market-pulse/
 
 ---
 
-## 🚀 Getting Started
+## 💻 Local Development
+
+*For developers wishing to run, inspect, or contribute to the source code locally:*
 
 ### Prerequisites
 - **Node.js**: `v18.0.0` or higher
 - **npm** or **pnpm**
 
-### Installation
+### Quickstart
 
 1. **Clone the repository:**
    ```bash
