@@ -177,7 +177,7 @@ CRITICAL PRICING & CURRENCY RULES:
    - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
 3. DO NOT return the "Previous Close" (which is the closing price from the prior day).
 4. REGULAR CLOSE VS AFTER-HOURS:
-   - If the market is open (9:30 AM - 4:00 PM ET), report the live real-time trading price.
+   - If the market is open (9:30 AM - 4:00 PM ET), report the live real-time trading price and ensure it is the accurate and not the closing price for the previous day
    - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S official regular session closing price (the 4:00 PM ET close matching Google Finance's headline quote and brokerages like Wealthsimple), NOT after-hours post-market ticks and NOT yesterday's close.
 5. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
