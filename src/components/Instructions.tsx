@@ -148,7 +148,7 @@ export function Instructions({ multi }: InstructionsProps) {
           transformOrigin: "center center",
           transition: "transform 0.05s ease-out",
         }}
-        class="w-full max-w-lg shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur"
+        class="w-full max-w-4xl shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur"
       >
         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,23 +156,26 @@ export function Instructions({ multi }: InstructionsProps) {
           </svg>
         </div>
 
-        <h2 class="text-2xl font-bold tracking-tight text-white">{WELCOME_TEXT.title}</h2>
-        <p class="mt-2 text-sm text-zinc-400 leading-relaxed">{WELCOME_TEXT.subtitle}</p>
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">{WELCOME_TEXT.title}</h2>
+        <p class="mt-1.5 text-sm sm:text-base text-zinc-400 leading-relaxed">{WELCOME_TEXT.subtitle}</p>
 
-        <div class="mt-6 space-y-3">
+        <div class="mt-6 space-y-2.5">
           <div class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Key Features
           </div>
-          <div class="grid grid-cols-1 gap-2 text-xs text-zinc-300">
+          <div class="grid grid-cols-1 gap-2 text-sm text-zinc-300">
             {WELCOME_TEXT.supported.map((item) => {
               const [title, ...rest] = item.split(" - ");
               const desc = rest.join(" - ");
               return (
-                <div key={item} class="flex items-start gap-2.5 rounded-lg bg-zinc-850/60 p-2.5 border border-zinc-800/80">
-                  <span class="text-emerald-400 mt-0.5 font-bold">✓</span>
-                  <div class="leading-relaxed">
+                <div
+                  key={item}
+                  class="flex items-center gap-2.5 rounded-xl bg-zinc-850/60 px-3.5 py-2.5 border border-zinc-800/80 text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                  <div class="leading-normal truncate">
                     <strong class="font-semibold text-zinc-100">{title}</strong>
-                    {desc && <span class="text-zinc-400"> – {desc}</span>}
+                    {desc && <span class="text-zinc-300"> – {desc}</span>}
                   </div>
                 </div>
               );
@@ -181,25 +184,25 @@ export function Instructions({ multi }: InstructionsProps) {
         </div>
 
         {/* Gemini API Key Configuration Section (Recommended) */}
-        <div class="mt-6 rounded-xl border border-violet-500/30 bg-violet-950/20 p-4">
+        <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/20 p-5">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300 text-xs font-bold">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300 text-sm font-bold">
                 🔑
               </span>
-              <span class="text-xs font-bold uppercase tracking-wider text-violet-300">
+              <span class="text-sm font-bold uppercase tracking-wider text-violet-300">
                 Gemini API Key (Recommended)
               </span>
             </div>
             {isKeyConfigured && (
-              <span class="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
+              <span class="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 Configured
               </span>
             )}
           </div>
 
-          <p class="mt-2 text-xs text-zinc-300 leading-relaxed">
+          <p class="mt-2.5 text-sm text-zinc-300 leading-relaxed">
             A Gemini API key is recommended to enable live stock searches, real-time Google Search price synchronization, and AI analyst research.
           </p>
 
@@ -208,22 +211,22 @@ export function Instructions({ multi }: InstructionsProps) {
               e.preventDefault();
               handleSaveKey();
             }}
-            class="mt-3 space-y-2"
+            class="mt-3.5 space-y-2.5"
           >
-            <div class="flex gap-2">
+            <div class="flex gap-2.5">
               <div class="relative flex-1">
                 <input
                   type={showKey ? "text" : "password"}
                   value={apiKey}
                   onInput={(e) => setApiKey((e.target as HTMLInputElement).value)}
                   placeholder="Paste your Gemini API key (AIzaSy...)"
-                  class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/40 transition pr-8"
+                  class="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/40 transition pr-10"
                 />
                 {apiKey && (
                   <button
                     type="button"
                     onClick={() => setShowKey(!showKey)}
-                    class="absolute right-2 top-2 text-[11px] text-zinc-400 hover:text-zinc-200"
+                    class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200"
                     title={showKey ? "Hide key" : "Show key"}
                   >
                     {showKey ? "🙈" : "👁️"}
@@ -232,7 +235,7 @@ export function Instructions({ multi }: InstructionsProps) {
               </div>
               <button
                 type="submit"
-                class="rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-500 transition shrink-0"
+                class="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition shrink-0"
               >
                 {isSaved ? "Saved! ✓" : isKeyConfigured ? "Update Key" : "Save Key"}
               </button>
@@ -240,7 +243,7 @@ export function Instructions({ multi }: InstructionsProps) {
                 <button
                   type="button"
                   onClick={handleClearKey}
-                  class="rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-xs font-medium text-zinc-400 hover:border-rose-800 hover:text-rose-400 transition shrink-0"
+                  class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-400 hover:border-rose-800 hover:text-rose-400 transition shrink-0"
                   title="Remove stored API key"
                 >
                   Clear
@@ -248,7 +251,7 @@ export function Instructions({ multi }: InstructionsProps) {
               )}
             </div>
 
-            <div class="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5">
+            <div class="flex items-center justify-between text-xs text-zinc-400 pt-0.5">
               <span>
                 Need an API key?{" "}
                 <a
