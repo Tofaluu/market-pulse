@@ -156,35 +156,40 @@ export async function fetchLivePriceWithAI(
   explicitCurrency?: string,
   sector?: string
 ): Promise<LivePriceResult> {
+  const { dateStr, timeStr } = getMarketDateContext();
   const expectedCurrency = getStockExpectedCurrency(symbol, sector, explicitCurrency);
-  const isCanadian = expectedCurrency === "CAD";
-  const searchQuery = isCanadian
-    ? `${symbol} stock price TSX Google Finance`
-    : `${symbol} stock price Google Finance`;
+  const exchangeDesc =
+    expectedCurrency === "CAD"
+      ? "TSX (Toronto Stock Exchange) in Canadian Dollars (CAD)"
+      : "NASDAQ or NYSE in US Dollars (USD)";
 
-  const prompt = `You are an automated real-time financial market data agent.
-Look up the current financial quote for the ticker '${symbol}' (${name}) by searching: "${searchQuery}".
+  const prompt = `You are a real-time financial market data agent.
+TEMPORAL CONTEXT:
+- Today's date: ${dateStr}
+- Current Eastern Time: ${timeStr} ET
 
-TARGET DATA:
-1. PRIMARY HEADLINE PRICE: Find the primary headline quote displayed at the top of Google Finance (google.com/finance) or Google Search for '${symbol}'.
-   - If the market is open right now, return the live trading price.
-   - If the market is currently closed, in after-hours, pre-market, or weekend/holiday, return the official regular session closing price from the most recently completed trading day (the main bold headline price at the top of Google Finance / Google Search).
-   - DO NOT report the session low, session high, 52-week low, bid, or ask price as the price. Always return the main headline price.
-2. NATIVE CURRENCY:
-   - Must be strictly in ${expectedCurrency}.
-   - Never convert ${expectedCurrency} to any other currency.
-3. DAY CHANGE & PERCENT CHANGE:
-   - Return the day change and percent change associated with this headline price.
+Perform a Google Search to determine the current, up-to-date real-world trading price for the asset/stock ticker '${symbol}' (${name}).
+This asset trades natively on ${exchangeDesc}.
 
-Provide the output strictly in this JSON format without markdown code blocks:
+CRITICAL PRICING & CURRENCY RULES:
+1. DATA SOURCE ANCHOR: Anchor directly to the official Google Finance (google.com/finance) quote box or official exchange feed (NYSE/NASDAQ/TSX).
+2. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
+   - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
+3. DO NOT return the "Previous Close" (which is the closing price from the prior day).
+4. REGULAR CLOSE VS AFTER-HOURS:
+   - If the market is open (9:30 AM - 4:00 PM ET), report the live real-time trading price.
+   - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S official regular session closing price (the 4:00 PM ET close matching Google Finance's headline quote and brokerages like Wealthsimple), NOT after-hours post-market ticks and NOT yesterday's close.
+5. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
+
+Provide the output strictly in this JSON format:
 {
-  "price": <numeric headline price in ${expectedCurrency}, e.g. 13.10 or 317.50>,
-  "change": <numeric day change in ${expectedCurrency}, e.g. +0.15 or -0.35>,
-  "percentChange": <numeric percent change, e.g. 1.15 or -0.50>,
-  "dayHigh": <optional numeric day high in ${expectedCurrency}>,
-  "dayLow": <optional numeric day low in ${expectedCurrency}>,
+  "price": <numeric price in ${expectedCurrency}, e.g. 317.50 or 45.45>,
+  "change": <numeric day change in ${expectedCurrency}, e.g. +2.05 or -0.35>,
+  "percentChange": <numeric percent change, e.g. 0.65 or -0.50>,
+  "dayHigh": <numeric day high in ${expectedCurrency}, e.g. 319.15>,
+  "dayLow": <numeric day low in ${expectedCurrency}, e.g. 314.80>,
   "currency": "${expectedCurrency}",
-  "summary": <one-sentence explanation citing the quote source, e.g. "Google Finance closing price for NTDOY is $13.10.">
+  "summary": <one-sentence summary of today's price and market movement>
 }
 Output only the JSON block without markdown backticks if possible, or inside a clean json code block.`;
 
@@ -399,6 +404,7 @@ export async function batchFetchLivePricesWithAI(
 ): Promise<BatchPriceResult> {
   if (stocks.length === 0) return {};
 
+  const { dateStr, timeStr } = getMarketDateContext();
   const stockListLines = stocks
     .map((s) => {
       const cur = getStockExpectedCurrency(s.symbol, s.sector, s.currency);
@@ -408,24 +414,25 @@ export async function batchFetchLivePricesWithAI(
     .join("\n");
 
   const prompt = `You are a financial market data agent.
-Perform a Google Search on Google Finance to find the current headline trading quote for each of these assets:
+TEMPORAL CONTEXT:
+- Today's date: ${dateStr}
+- Current Eastern Time: ${timeStr} ET
+
+Perform a Google Search to find current, up-to-date real-world trading prices for each of these assets:
 ${stockListLines}
 
-CRITICAL RULES:
-1. PRIMARY HEADLINE PRICE: For each asset, find the primary headline price displayed at the top of Google Finance (google.com/finance) or Google Search.
-   - If the market is open, report the live trading price.
-   - If the market is closed, in after-hours, pre-market, or weekend, report the official regular session closing price from the most recently completed trading session (the main bold headline quote).
-   - DO NOT report the session low, 52-week low, or bid/ask spread as the price.
-2. STRICT NATIVE CURRENCIES:
-   - For US equities and ADRs (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA, NTDOY): Report strictly in USD (US Dollars).
+CRITICAL PRICING & CURRENCY RULES:
+1. STRICT PER-ASSET NATIVE CURRENCIES:
+   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD!
    - For Canadian equities and ETFs (e.g. XEQT, SHOP, RY, VFV): Report strictly in CAD (Canadian Dollars).
-3. DAY CHANGE & PERCENT CHANGE:
-   - Return the day change and percent change matching the headline quote.
+2. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
+3. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
+4. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
   "SYMBOL": {
-    "price": <numeric headline price in requested native currency>,
+    "price": <numeric price in requested native currency>,
     "change": <numeric day change in native currency>,
     "percentChange": <numeric percent change>,
     "dayHigh": <optional numeric day high in native currency>,
@@ -500,16 +507,13 @@ TEMPORAL CONTEXT:
 
 The user wants to find and add this asset or company to their stock watchlist: "${clean}".
 
-Perform a Google Search to determine if this is a publicly traded company, ETF, stock, or ADR on major North American exchanges (NYSE, NASDAQ, TSX Toronto Stock Exchange, or OTC Markets / OTCMKTS):
+Perform a Google Search to determine if this is a publicly traded company, ETF, or stock on major North American exchanges (NYSE, NASDAQ, TSX Toronto Stock Exchange):
 1. Identify the official exchange ticker symbol.
    - For Canadian assets (e.g. Air Canada, Telus, Royal Bank, Canadian Pacific), use the TSX ticker (e.g. AC, T, RY, CP) and currency "CAD".
-   - For US assets and international ADRs (e.g. Apple, Nintendo, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US or OTC ticker (e.g. AAPL, NTDOY, TM, SONY, RACE, NVO) and currency "USD".
+   - For US assets (e.g. Apple, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US ticker (e.g. AAPL, TM, SONY, RACE, NVO) and currency "USD".
 2. Identify the full official company or fund name.
 3. Identify the sector or asset category.
-4. Retrieve the primary headline price and daily price change in its native trading currency from Google Finance (google.com/finance).
-   - If the market is open, report the live trading price.
-   - If the market is closed or in after-hours, report the official regular session closing price from the most recently completed trading session (the main bold headline quote).
-   - DO NOT report the session low, 52-week low, or bid/ask spread as the price.
+4. Retrieve the current trading price and daily price change in its native trading currency from Google Finance (google.com/finance) or the primary exchange. If after-hours or market closed, use today's official 4:00 PM regular session close.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {

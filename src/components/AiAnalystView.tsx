@@ -40,13 +40,13 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const result = await store.syncSingleStock(stock.symbol);
-      if (result) {
+      const ok = await store.syncSingleStock(stock.symbol);
+      if (ok) {
         setLiveResult({
-          price: result.price,
-          change: result.change ?? 0,
-          percentChange: result.percentChange ?? 0,
-          sourceText: result.sourceText || "Verified live via Google Finance & Search",
+          price: stock.price,
+          change: stock.change,
+          percentChange: stock.percentChange,
+          sourceText: "Verified live via Gemini AI & Google Search",
           timestamp: new Date().toLocaleTimeString(),
         });
       } else {
@@ -125,20 +125,17 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               ) : (
                 <>
                   <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                    {formatPrice(liveResult ? liveResult.price : stock.price)}
+                    {formatPrice(stock.price)}
                   </span>
                   <div
                     class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
-                      (liveResult ? liveResult.change ?? stock.change : stock.change) >= 0
-                        ? "text-emerald-400"
-                        : "text-rose-400"
+                      stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
                     }`}
                   >
                     <span>
-                      {formatSignedChange(liveResult ? liveResult.change ?? stock.change : stock.change)} (
-                      {formatPercentChange(liveResult ? liveResult.percentChange ?? stock.percentChange : stock.percentChange)})
+                      {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
                     </span>
-                    <span>{(liveResult ? liveResult.change ?? stock.change : stock.change) >= 0 ? "↑" : "↓"}</span>
+                    <span>{stock.change >= 0 ? "↑" : "↓"}</span>
                   </div>
                   {liveResult && (
                     <span class="text-xs text-emerald-400">
