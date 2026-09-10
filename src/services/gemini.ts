@@ -172,11 +172,13 @@ Perform a Google Search to determine the current, up-to-date real-world trading 
 This asset trades natively on ${exchangeDesc}.
 
 CRITICAL PRICING & CURRENCY RULES:
-1. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
+1. DATA SOURCE ANCHOR: Anchor directly to the official Google Finance (google.com/finance) quote box or official exchange feed (NYSE/NASDAQ/TSX).
+2. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
    - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
-2. DO NOT return the "Previous Close" (which is the closing price from the prior day).
-3. If the market is open, report the live trading price.
-4. If the market is closed or in after-hours, report TODAY'S official closing price (${dateStr} 4:00 PM ET close), NOT yesterday's close.
+3. DO NOT return the "Previous Close" (which is the closing price from the prior day).
+4. REGULAR CLOSE VS AFTER-HOURS:
+   - If the market is open (9:30 AM - 4:00 PM ET), report the live real-time trading price.
+   - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S official regular session closing price (the 4:00 PM ET close matching Google Finance's headline quote and brokerages like Wealthsimple), NOT after-hours post-market ticks and NOT yesterday's close.
 5. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
 
 Provide the output strictly in this JSON format:
@@ -505,7 +507,7 @@ Perform a Google Search to determine if this is a publicly traded company, ETF, 
    - For US assets (e.g. Apple, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US ticker (e.g. AAPL, TM, SONY, RACE, NVO) and currency "USD".
 2. Identify the full official company or fund name.
 3. Identify the sector or asset category.
-4. Retrieve the current trading price and daily price change in its native trading currency.
+4. Retrieve the current trading price and daily price change in its native trading currency from Google Finance (google.com/finance) or the primary exchange. If after-hours or market closed, use today's official 4:00 PM regular session close.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
