@@ -1,6 +1,8 @@
-﻿// Instruction and multi-select overview panels.
+// Instruction and multi-select overview panels.
+import { useState } from "preact/hooks";
 import { MULTI_SELECT_TEXT, WELCOME_TEXT } from "../constants";
 import { formatPercentChange, formatPrice } from "../format";
+import { clearGeminiApiKey, getGeminiApiKey, setGeminiApiKey } from "../services/gemini";
 import { store } from "../state";
 
 type InstructionsProps = {
@@ -8,6 +10,33 @@ type InstructionsProps = {
 };
 
 export function Instructions({ multi }: InstructionsProps) {
+  const [apiKey, setApiKey] = useState(getGeminiApiKey());
+  const [isSaved, setIsSaved] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [isKeyConfigured, setIsKeyConfigured] = useState(Boolean(getGeminiApiKey().trim()));
+
+  const handleSaveKey = () => {
+    const trimmed = apiKey.trim();
+    if (trimmed) {
+      setGeminiApiKey(trimmed);
+      setIsKeyConfigured(true);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    } else {
+      clearGeminiApiKey();
+      setApiKey("");
+      setIsKeyConfigured(false);
+      setIsSaved(false);
+    }
+  };
+
+  const handleClearKey = () => {
+    clearGeminiApiKey();
+    setApiKey("");
+    setIsKeyConfigured(false);
+    setIsSaved(false);
+  };
+
   const selectedSymbols = Array.from(store.selectedSymbols.value);
   const selectedStocks = store.stocks.value.filter((s) =>
     store.isSelected(s.symbol)
@@ -96,23 +125,89 @@ export function Instructions({ multi }: InstructionsProps) {
           </div>
         </div>
 
-        <div class="mt-6">
-          <div class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-            Keyboard Shortcuts
+        {/* Gemini API Key Configuration Section (Recommended) */}
+        <div class="mt-6 rounded-xl border border-violet-500/30 bg-violet-950/20 p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300 text-xs font-bold">
+                🔑
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-300">
+                Gemini API Key (Recommended)
+              </span>
+            </div>
+            {isKeyConfigured && (
+              <span class="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Configured
+              </span>
+            )}
           </div>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            {WELCOME_TEXT.shortcuts.map((sc) => {
-              const [key, desc] = sc.split(" - ");
-              return (
-                <div key={sc} class="flex items-center justify-between rounded-md bg-zinc-850/40 px-2.5 py-1.5 border border-zinc-800">
-                  <kbd class="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-bold text-zinc-300">
-                    {key}
-                  </kbd>
-                  <span class="text-zinc-400 text-[11px] truncate max-w-[120px]">{desc}</span>
-                </div>
-              );
-            })}
-          </div>
+
+          <p class="mt-2 text-xs text-zinc-300 leading-relaxed">
+            A Gemini API key is recommended to enable live stock searches, real-time Google Search price synchronization, and AI analyst research.
+          </p>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveKey();
+            }}
+            class="mt-3 space-y-2"
+          >
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={apiKey}
+                  onInput={(e) => setApiKey((e.target as HTMLInputElement).value)}
+                  placeholder="Paste your Gemini API key (AIzaSy...)"
+                  class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/40 transition pr-8"
+                />
+                {apiKey && (
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    class="absolute right-2 top-2 text-[11px] text-zinc-400 hover:text-zinc-200"
+                    title={showKey ? "Hide key" : "Show key"}
+                  >
+                    {showKey ? "🙈" : "👁️"}
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                class="rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-500 transition shrink-0"
+              >
+                {isSaved ? "Saved! ✓" : isKeyConfigured ? "Update Key" : "Save Key"}
+              </button>
+              {isKeyConfigured && (
+                <button
+                  type="button"
+                  onClick={handleClearKey}
+                  class="rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-xs font-medium text-zinc-400 hover:border-rose-800 hover:text-rose-400 transition shrink-0"
+                  title="Remove stored API key"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5">
+              <span>
+                Need an API key?{" "}
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="font-medium text-violet-400 hover:text-violet-300 hover:underline"
+                >
+                  Get free key at Google AI Studio ↗
+                </a>
+              </span>
+              <span class="text-zinc-500">Stored locally in browser</span>
+            </div>
+          </form>
         </div>
 
         {store.stocks.value.length > 0 && (
