@@ -26,8 +26,9 @@ export function Instructions({ multi }: InstructionsProps) {
       const cardW = card.offsetWidth;
 
       if (cardH > 0 && cardW > 0 && availH > 0 && availW > 0) {
-        const factor = Math.min(1, availH / cardH, availW / cardW);
-        setScale(Math.max(0.35, factor));
+        const factor = Math.min(availH / cardH, availW / cardW);
+        // Allow smooth scaling both down and up with browser size & zoom (0.35x - 1.8x)
+        setScale(Math.min(1.8, Math.max(0.35, factor)));
       }
     };
 
