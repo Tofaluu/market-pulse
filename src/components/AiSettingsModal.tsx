@@ -103,19 +103,19 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
             <div class="flex items-center justify-between">
               <div>
                 <p class="font-semibold text-zinc-300">Watchlist Cache</p>
-                <p class="text-[11px] text-zinc-500">Restore authentic 2026 seed stocks (XEQT, NVDA, AAPL, etc.)</p>
+                <p class="text-[11px] text-zinc-500">Clear all stocks from your watchlist</p>
               </div>
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm("Reset watchlist to defaults (XEQT, NVDA, AAPL, MSFT, GOOGL, AMZN)?")) {
+                  if (confirm("Clear all stocks from your watchlist?")) {
                     store.resetToDefaultWatchlist();
                     onClose();
                   }
                 }}
                 class="rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-white transition"
               >
-                Reset Watchlist
+                Clear Watchlist
               </button>
             </div>
           </div>

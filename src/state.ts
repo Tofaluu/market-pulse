@@ -37,7 +37,7 @@ export function isMarketOpen(): boolean {
   }
 }
 
-const STORAGE_KEY = "marketpulse_watchlist_v2";
+const STORAGE_KEY = "marketpulse_watchlist_v3";
 
 function loadPersistedWatchlist(): Stock[] | null {
   try {
@@ -62,10 +62,8 @@ function persistWatchlist(stocks: Stock[]) {
 }
 
 class StockStore {
-  // Initialize with persisted watchlist if present, otherwise initial curated stocks
-  private initialStocks =
-    loadPersistedWatchlist() ??
-    stockRecords.slice(0, 6).map((s) => ({ ...s }));
+  // Initialize with persisted watchlist if present, otherwise empty watchlist
+  private initialStocks = loadPersistedWatchlist() ?? [];
 
   stocks = signal<Stock[]>(this.initialStocks);
   selectedSymbols = signal<Set<string>>(new Set<string>());
@@ -96,8 +94,7 @@ class StockStore {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {}
-    const defaults = stockRecords.slice(0, 6).map((s) => ({ ...s }));
-    this.stocks.value = defaults;
+    this.stocks.value = [];
     this.selectedSymbols.value = new Set<string>();
     this.save();
   }
