@@ -61,10 +61,14 @@ export function getEtTimeInfo(date: Date = new Date()): EtTimeInfo {
 }
 
 /**
- * Determines whether market open (9:30 AM ET = 570 mins) or market close (4:00 PM ET = 960 mins)
- * has occurred since the last sync.
+ * Determines whether an automatic sync is due.
+ * - Always triggers if no sync has occurred yet.
+ * - During market hours (9:30 AM - 4:00 PM ET): polls every 20 seconds.
+ * - Outside market hours: refreshes if prices haven't been updated in the last 60 seconds.
+ * - Triggers immediately when market open (9:30 AM ET) or close (4:00 PM ET) is crossed.
  */
 export function isCatchUpSyncDue(lastSync: number | null): boolean {
+  // If no sync has occurred yet, sync immediately
   if (!lastSync) return true;
 
   const now = new Date();
@@ -81,52 +85,36 @@ export function isCatchUpSyncDue(lastSync: number | null): boolean {
   const OPEN_MINUTES = 570; // 9:30 AM ET
   const CLOSE_MINUTES = 960; // 4:00 PM ET
 
-  // Dynamic In-Session Live Polling:
-  // If the market is currently OPEN (regular session on weekdays), poll every 20 seconds
-  if (
+  const isMarketOpen =
     nowEt.isWeekday &&
     nowEt.minutesSinceMidnight >= OPEN_MINUTES &&
-    nowEt.minutesSinceMidnight < CLOSE_MINUTES
-  ) {
+    nowEt.minutesSinceMidnight < CLOSE_MINUTES;
+
+  // 1. In-session (regular trading hours): sync if older than 20 seconds
+  if (isMarketOpen) {
     return nowMs - lastMs >= 20 * 1000;
   }
 
-  // Outside market hours:
-  // Avoid spamming if synced within the last 5 minutes
-  if (nowMs - lastMs < 5 * 60 * 1000) return false;
-
-  // If more than 7 days ago, definitely due
-  if (nowMs - lastMs > 7 * 24 * 60 * 60 * 1000) return true;
-
-  // Case 1: Same calendar day in Eastern Time
-  if (nowEt.year === lastEt.year && nowEt.month === lastEt.month && nowEt.day === lastEt.day) {
-    if (!nowEt.isWeekday) return false; // Weekend - no intra-day market milestones
-
-    // Crossed 9:30 AM market open today
-    if (lastEt.minutesSinceMidnight < OPEN_MINUTES && nowEt.minutesSinceMidnight >= OPEN_MINUTES) {
-      return true;
-    }
-    // Crossed 4:00 PM market close today
-    if (lastEt.minutesSinceMidnight < CLOSE_MINUTES && nowEt.minutesSinceMidnight >= CLOSE_MINUTES) {
-      return true;
-    }
-    return false;
-  }
-
-  // Case 2: Different calendar days
-  // If last sync was on a weekday before that day's 4:00 PM close, the close happened -> due
-  if (lastEt.isWeekday && lastEt.minutesSinceMidnight < CLOSE_MINUTES) {
+  // 2. Outside market hours: update if prices haven't been synced in the last 60 seconds (1 minute)
+  if (nowMs - lastMs >= 60 * 1000) {
     return true;
   }
 
-  // If today is a weekday and we are past today's 9:30 AM open -> due
-  if (nowEt.isWeekday && nowEt.minutesSinceMidnight >= OPEN_MINUTES) {
+  // 3. Market milestones:
+  // Crossed 9:30 AM market open today
+  if (
+    nowEt.isWeekday &&
+    lastEt.minutesSinceMidnight < OPEN_MINUTES &&
+    nowEt.minutesSinceMidnight >= OPEN_MINUTES
+  ) {
     return true;
   }
-
-  // If there was any full weekday between lastSync and now -> due
-  const dayDiff = Math.floor((nowMs - lastMs) / (24 * 60 * 60 * 1000));
-  if (dayDiff >= 2) {
+  // Crossed 4:00 PM market close today
+  if (
+    nowEt.isWeekday &&
+    lastEt.minutesSinceMidnight < CLOSE_MINUTES &&
+    nowEt.minutesSinceMidnight >= CLOSE_MINUTES
+  ) {
     return true;
   }
 
@@ -134,15 +122,15 @@ export function isCatchUpSyncDue(lastSync: number | null): boolean {
 }
 
 /**
- * Evaluates sync state and triggers automatic batch sync if a market milestone has passed
- * or if dynamic live updates are due during market hours.
+ * Evaluates sync state and triggers automatic batch sync.
+ * When force is true (e.g. on page refresh or initial load), triggers unconditionally.
  */
-export async function checkAndTriggerCatchUpSync(): Promise<boolean> {
+export async function checkAndTriggerCatchUpSync(force = false): Promise<boolean> {
   if (store.stocks.value.length === 0) return false;
   if (store.isSyncingAll.value) return false;
 
   const lastSync = getLastSyncTimestamp();
-  if (!isCatchUpSyncDue(lastSync)) return false;
+  if (!force && !isCatchUpSyncDue(lastSync)) return false;
 
   await store.syncAllStocks(true);
   return true;
@@ -152,8 +140,8 @@ export async function checkAndTriggerCatchUpSync(): Promise<boolean> {
  * Initializes automatic background listeners for catch-up syncing and live in-session updates.
  */
 export function initSmartCatchUpSync(): () => void {
-  // 1. Initial check when app loads
-  checkAndTriggerCatchUpSync();
+  // 1. ALWAYS trigger an immediate sync when app loads or page is refreshed
+  checkAndTriggerCatchUpSync(true);
 
   // 2. Check whenever user switches back to this tab/window
   const handleVisibilityChange = () => {
