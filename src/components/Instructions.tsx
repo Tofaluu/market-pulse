@@ -269,14 +269,14 @@ export function Instructions({ multi }: InstructionsProps) {
         </div>
 
         {store.stocks.value.length > 0 && (
-          <div class="mt-6 pt-4 border-t border-zinc-800 text-center">
+          <div class="mt-5 text-center">
             <button
               type="button"
               onClick={() => store.clickStock(store.stocks.value[0].symbol, false)}
-              class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-900/30 hover:bg-emerald-500 transition"
+              class="inline-flex items-center gap-2.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 hover:bg-emerald-500 hover:shadow-emerald-900/50 transition"
             >
               <span>View {store.stocks.value[0].symbol} Live Analytics</span>
-              <span>→</span>
+              <span class="text-base">→</span>
             </button>
           </div>
         )}
