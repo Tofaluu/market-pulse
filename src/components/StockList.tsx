@@ -146,18 +146,15 @@ export function StockList() {
                 }}
               >
                 {/* Top Row: Symbol, Name & Price */}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="font-bold tracking-tight text-white shrink-0">{stock.symbol}</span>
-                    <span class="rounded bg-zinc-800/80 px-1 py-0.2 text-[9px] font-semibold text-zinc-400 shrink-0">
-                      {stock.currency || "USD"}
-                    </span>
-                    <span class="truncate text-[11px] text-zinc-400">
+                    <span class="font-bold tracking-tight text-white">{stock.symbol}</span>
+                    <span class="max-w-[115px] truncate text-[11px] text-zinc-400">
                       {stock.name}
                     </span>
                   </div>
 
-                  <div class="text-right">
+                  <div class="text-right shrink-0">
                     {store.isSyncing(stock.symbol) ? (
                       <span class="inline-flex items-center gap-1 text-[11px] font-medium text-violet-400 animate-pulse">
                         <svg class="h-2.5 w-2.5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">

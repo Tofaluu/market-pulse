@@ -44,42 +44,7 @@ function loadPersistedWatchlist(): Stock[] | null {
     if (data === null) return null;
     const parsed = JSON.parse(data);
     if (Array.isArray(parsed)) {
-      return parsed.map((s: Stock) => {
-        const expectedCur = getStockExpectedCurrency(s.symbol, s.sector, s.currency);
-        let price = s.price;
-        let change = s.change;
-        let percentChange = s.percentChange;
-        let dayHigh = s.dayHigh;
-        let dayLow = s.dayLow;
-
-        // If AAPL is still carrying the legacy 2024 starter price (~$228), upgrade to authentic 2026 level (~$317.50 USD)
-        if (s.symbol === "AAPL" && price < 270) {
-          price = 317.50;
-          change = 2.06;
-          percentChange = 0.65;
-          dayHigh = 319.15;
-          dayLow = 314.80;
-        }
-
-        // Heal distorted dayHigh / dayLow if range latched onto stale historical baselines
-        const open = Number((price - change).toFixed(2));
-        if (dayHigh > price * 1.2 || dayHigh < price) {
-          dayHigh = Math.max(price, open);
-        }
-        if (dayLow < price * 0.8 || dayLow > price) {
-          dayLow = Math.min(price, open);
-        }
-
-        return {
-          ...s,
-          currency: expectedCur,
-          price,
-          change,
-          percentChange,
-          dayHigh,
-          dayLow,
-        };
-      });
+      return parsed;
     }
   } catch (err) {
     console.warn("Failed to load persisted watchlist", err);
