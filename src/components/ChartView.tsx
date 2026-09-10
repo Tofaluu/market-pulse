@@ -74,7 +74,8 @@ export function ChartView({ stock }: ChartViewProps) {
     script.innerHTML = JSON.stringify({
       autosize: true,
       symbol: tvSymbol,
-      interval: "D",
+      interval: "1", // 1-minute interval resolution
+      range: "1D", // Default to 1-day view
       timezone: "America/New_York",
       theme: "dark",
       style: "3", // 3 = Sleek Area chart with gradient fill
