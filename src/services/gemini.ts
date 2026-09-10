@@ -1,5 +1,6 @@
 // Gemini 2.0 Flash AI Service with Google Search Grounding for live financial lookups & company research.
 import { getStockExpectedCurrency } from "../stocks";
+import { fetchYahooChartSeries } from "./yahooFinance";
 
 const API_KEY_STORAGE_KEY = "marketpulse_gemini_api_key";
 
@@ -268,6 +269,14 @@ function sanitizeAiResponse(text: string): string {
 
 export type AnalysisTopic = "summary" | "trajectory" | "risks" | "past_week" | "custom";
 
+export type StockAnalysisContext = {
+  price?: number;
+  currency?: string;
+  change?: number;
+  percentChange?: number;
+  sector?: string;
+};
+
 /**
  * Conducts specialized, highly structured institutional AI research on a company or ETF.
  */
@@ -275,12 +284,19 @@ export async function analyzeCompanyWithAI(
   symbol: string,
   name: string,
   topic: AnalysisTopic,
-  customQuestion?: string
+  customQuestion?: string,
+  stockContext?: StockAnalysisContext
 ): Promise<string> {
   const { dateStr } = getMarketDateContext();
+  const currentPriceText =
+    stockContext?.price !== undefined
+      ? `- Current Trading Price: $${stockContext.price.toFixed(2)} ${stockContext.currency || "USD"}`
+      : "";
+
   const commonDirectives = `
 TEMPORAL CONTEXT & ACTIVE RESEARCH DIRECTIVES:
 - Today's Date: ${dateStr}.
+${currentPriceText}
 - You MUST perform a Google Search to verify CURRENT, up-to-date real-world facts, recent product/hardware launches, current-year earnings, and modern strategic moves for '${name}' (${symbol}).
 - Ground all findings strictly in the current real-world market context as of ${dateStr}. DO NOT rely on outdated pre-trained cutoff assumptions (e.g. verify the latest generation consoles/hardware, current product lineups, and latest quarter results).
 - DO NOT include conversational filler, pleasantries, or phrases like "Here is...", "Below is...", or "Certainly!".
@@ -314,15 +330,61 @@ Provide a structured, concise executive overview using EXACTLY this markdown lay
 ### **Executive Takeaway**
 [1 punchy sentence synthesizing their long-term competitive durability]`;
   } else if (topic === "past_week") {
+    // Fetch verified Yahoo Finance 5-day / weekly chart numbers
+    let yahooStatsContext = "";
+    try {
+      const chart5D = await fetchYahooChartSeries(
+        symbol,
+        "5D",
+        stockContext?.sector,
+        stockContext?.currency
+      );
+      if (chart5D && chart5D.points.length > 0) {
+        const startPoint = chart5D.points[0];
+        const endPoint = chart5D.points[chart5D.points.length - 1];
+        const startPrice = startPoint.price;
+        const currentPrice = stockContext?.price ?? endPoint.price;
+        const netChange = Number((currentPrice - startPrice).toFixed(2));
+        const netPercentChange =
+          startPrice > 0 ? Number(((netChange / startPrice) * 100).toFixed(2)) : 0;
+        const allPrices = chart5D.points.map((p) => p.price);
+        const low5D = Math.min(...allPrices);
+        const high5D = Math.max(...allPrices);
+        const currency = chart5D.currency || stockContext?.currency || "USD";
+
+        yahooStatsContext = `
+VERIFIED YAHOO FINANCE 5-DAY / 1-WEEK CHART DATA:
+- Current Price: $${currentPrice.toFixed(2)} ${currency}
+- Price 5 Trading Days Ago (${startPoint.dateStr}): $${startPrice.toFixed(2)} ${currency}
+- Net 5-Day Change: ${netChange >= 0 ? "+" : ""}$${netChange.toFixed(2)} ${currency} (${netPercentChange >= 0 ? "+" : ""}${netPercentChange.toFixed(2)}%)
+- 5-Day Low: $${low5D.toFixed(2)} ${currency} | 5-Day High: $${high5D.toFixed(2)} ${currency}
+
+CRITICAL MANDATORY INSTRUCTIONS:
+- You MUST CITE these exact verified Yahoo Finance figures in the "Direction & Net Change" bullet (e.g. mention that it moved from $${startPrice.toFixed(2)} to $${currentPrice.toFixed(2)}, a ${netPercentChange >= 0 ? "+" : ""}${netPercentChange.toFixed(2)}% move, trading in a range of $${low5D.toFixed(2)} - $${high5D.toFixed(2)}).
+- Do NOT guess different price numbers. Ground your explanation in the real news that drove this exact price action!
+`;
+      } else if (stockContext?.price !== undefined) {
+        const cur = stockContext.currency || "USD";
+        yahooStatsContext = `
+VERIFIED YAHOO FINANCE PRICE:
+- Current Price: $${stockContext.price.toFixed(2)} ${cur}
+${stockContext.change !== undefined ? `- Today's Move: ${stockContext.change >= 0 ? "+" : ""}$${stockContext.change.toFixed(2)} (${stockContext.percentChange !== undefined ? `${stockContext.percentChange >= 0 ? "+" : ""}${stockContext.percentChange.toFixed(2)}%` : ""})` : ""}
+`;
+      }
+    } catch {
+      // Continue gracefully with search grounding
+    }
+
     prompt = `You are a market analyst explaining why '${name}' (${symbol}) went up or down over the past 7 days (the 7 days leading up to ${dateStr}).
 ${commonDirectives}
+${yahooStatsContext}
 - USE PLAIN, STRAIGHTFORWARD ENGLISH. AVOID CONFUSING WALL STREET JARGON.
 - Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, product announcements, or broader sector shifts from the past 7 days leading up to ${dateStr}.
 
 Provide a concise breakdown using EXACTLY this markdown layout:
 
 ### **Past Week Price Movement**
-* **Direction & Sentiment:** [1 sentence explaining whether the stock rose, dropped, or remained flat over the past week, and the main market sentiment]
+* **Direction & Net Change:** [Cite the verified Yahoo Finance movement: start price, current price, net percentage move over the past week, and the overall market sentiment]
 
 ### **Why It Moved (Past Week Drivers)**
 * **[Primary Company Driver]:** [1-2 simple, plain-English sentences on recent company news, earnings, product announcements, or leadership updates]

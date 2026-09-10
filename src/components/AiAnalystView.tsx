@@ -1,4 +1,4 @@
-import { useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import { marked } from "marked";
 import { formatPercentChange, formatPrice, formatSignedChange } from "../format";
 import {
@@ -6,6 +6,7 @@ import {
   getGeminiApiKey,
   type AnalysisTopic,
 } from "../services/gemini";
+import { store } from "../state";
 import type { Stock } from "../stocks";
 import { AiSettingsModal } from "./AiSettingsModal";
 
@@ -18,13 +19,44 @@ type AiAnalystViewProps = {
   stock: Stock;
 };
 
+type CachedReport = {
+  activeTopic: AnalysisTopic | null;
+  analysisText: string;
+  customQuestion: string;
+};
+
+// Global cache preserving generated reports across view toggles and stock switches
+const reportCache = new Map<string, CachedReport>();
+
 export function AiAnalystView({ stock }: AiAnalystViewProps) {
-  const [activeTopic, setActiveTopic] = useState<AnalysisTopic | null>(null);
-  const [analysisText, setAnalysisText] = useState<string>("");
+  const cached = reportCache.get(stock.symbol.toUpperCase());
+  const [activeTopic, setActiveTopic] = useState<AnalysisTopic | null>(
+    cached?.activeTopic ?? null
+  );
+  const [analysisText, setAnalysisText] = useState<string>(
+    cached?.analysisText ?? ""
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [customQuestion, setCustomQuestion] = useState<string>("");
+  const [customQuestion, setCustomQuestion] = useState<string>(
+    cached?.customQuestion ?? ""
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+
+  // Sync state when selected stock changes
+  useEffect(() => {
+    const existing = reportCache.get(stock.symbol.toUpperCase());
+    if (existing) {
+      setActiveTopic(existing.activeTopic);
+      setAnalysisText(existing.analysisText);
+      setCustomQuestion(existing.customQuestion);
+    } else {
+      setActiveTopic(null);
+      setAnalysisText("");
+      setCustomQuestion("");
+    }
+    setErrorMsg(null);
+  }, [stock.symbol]);
 
   const hasApiKey = Boolean(getGeminiApiKey());
 
@@ -44,9 +76,23 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
         stock.symbol,
         stock.name,
         topic,
-        question
+        question,
+        {
+          price: stock.price,
+          currency: stock.currency,
+          change: stock.change,
+          percentChange: stock.percentChange,
+          sector: stock.sector,
+        }
       );
       setAnalysisText(result);
+
+      // Cache report so switching between chart and AI view never resets the answer
+      reportCache.set(stock.symbol.toUpperCase(), {
+        activeTopic: topic,
+        analysisText: result,
+        customQuestion: question ?? customQuestion,
+      });
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to generate AI analysis");
     } finally {
@@ -64,25 +110,42 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
   }, [analysisText]);
 
   return (
-    <div class="h-full min-h-0 flex-1 overflow-y-auto bg-zinc-950 p-6">
-      <div class="mx-auto max-w-5xl space-y-5 pb-16">
-        {/* Header Banner */}
-        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-800/80 pb-5">
-          <div>
-            <div class="flex items-center gap-2.5">
+    <div class="flex h-full min-h-0 flex-1 flex-col bg-zinc-950 p-6 overflow-hidden">
+      {/* Header Banner - exact same position and layout as Chart View */}
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-4 border-b border-zinc-800/80 pb-4 shrink-0">
+        <div>
+          <div class="flex items-center gap-2.5 flex-wrap">
               <h2 class="text-2xl font-bold tracking-tight text-white">{stock.name}</h2>
               <span class="rounded-md bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-zinc-300">
                 {stock.symbol}
               </span>
-              <span class="rounded-md bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-xs font-medium text-violet-300">
-                Gemini 3.6 AI Analyst
+              <span class="rounded-md bg-zinc-900 border border-zinc-700/80 px-2 py-0.5 text-xs font-semibold text-zinc-300">
+                {stock.currency || "USD"}
+              </span>
+              {stock.sector && (
+                <span class="rounded-md bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
+                  {stock.sector}
+                </span>
+              )}
+              <span class="rounded-md bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[11px] font-medium text-violet-300 flex items-center gap-1.5">
+                <span class="relative flex h-1.5 w-1.5">
+                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
+                  <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-500" />
+                </span>
+                <span>Gemini 3.6 AI Analyst</span>
               </span>
             </div>
 
-            <div class="mt-2 flex items-baseline gap-3">
-              <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                {formatPrice(stock.price)}
-              </span>
+            {/* Hero Price Display */}
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+                  {formatPrice(stock.price)}
+                </span>
+                <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  {stock.currency || "USD"}
+                </span>
+              </div>
               <div
                 class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
                   stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
@@ -93,6 +156,23 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
                 </span>
                 <span>{stock.change >= 0 ? "↑" : "↓"}</span>
               </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="h-6 inline-flex items-center text-xs text-zinc-400">
+                  {store.isMarketOpen.value ? "Live Market Session" : "Market Closed"}
+                </span>
+
+                {/* Back to Chart Button */}
+                <button
+                  type="button"
+                  onClick={() => store.setViewMode("chart")}
+                  class="h-6 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition shadow-sm"
+                  title="Return to interactive financial chart"
+                >
+                  <span>📈</span>
+                  <span>Back to Interactive Chart</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -102,15 +182,18 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               type="button"
               onClick={() => setIsSettingsOpen(true)}
               title="Configure Gemini API Key"
-              class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+              class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition shadow-sm"
             >
-              ⚙️
+              <span>⚙️</span>
+              <span>AI Settings</span>
             </button>
           </div>
         </div>
 
-        {/* Error Alert */}
-        {errorMsg && (
+        {/* Scrollable Content Body */}
+        <div class="min-h-0 flex-1 overflow-y-auto space-y-5 pb-16 pr-1 select-text">
+          {/* Error Alert */}
+          {errorMsg && (
           <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-4 text-xs text-rose-300">
             <div class="flex items-center justify-between">
               <span>⚠️ {errorMsg}</span>

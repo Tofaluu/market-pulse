@@ -129,3 +129,181 @@ export async function batchFetchYahooFinanceQuotes(
   await Promise.allSettled(promises);
   return results;
 }
+
+export type YahooChartPoint = {
+  timestamp: number;
+  dateStr: string;
+  timeStr: string;
+  price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+};
+
+export type YahooHistoricalChart = {
+  symbol: string;
+  currency: string;
+  previousClose: number;
+  currentPrice: number;
+  dayHigh?: number;
+  dayLow?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  volume?: number;
+  points: YahooChartPoint[];
+  timeframe: string;
+};
+
+/**
+ * Fetches real historical/intraday chart data series from Yahoo Finance.
+ */
+export async function fetchYahooChartSeries(
+  symbol: string,
+  range: "1D" | "5D" | "1M" | "6M" | "1Y" | "5Y" | "ALL" = "1D",
+  sector?: string,
+  currency?: string
+): Promise<YahooHistoricalChart | null> {
+  const formattedSymbol = formatYahooSymbol(symbol, sector, currency);
+  const expectedCur = getStockExpectedCurrency(symbol, sector, currency);
+
+  let yahooRange = "1d";
+  let yahooInterval = "5m";
+
+  switch (range) {
+    case "1D":
+      yahooRange = "1d";
+      yahooInterval = "5m";
+      break;
+    case "5D":
+      yahooRange = "5d";
+      yahooInterval = "15m";
+      break;
+    case "1M":
+      yahooRange = "1mo";
+      yahooInterval = "1d";
+      break;
+    case "6M":
+      yahooRange = "6mo";
+      yahooInterval = "1d";
+      break;
+    case "1Y":
+      yahooRange = "1y";
+      yahooInterval = "1d";
+      break;
+    case "5Y":
+      yahooRange = "5y";
+      yahooInterval = "1wk";
+      break;
+    case "ALL":
+      yahooRange = "max";
+      yahooInterval = "1mo";
+      break;
+  }
+
+  const queryPath = `/v8/finance/chart/${encodeURIComponent(formattedSymbol)}?range=${yahooRange}&interval=${yahooInterval}`;
+  const endpoints = [
+    `/api/yahoo${queryPath}`,
+    `https://query1.finance.yahoo.com${queryPath}`,
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      const result = data?.chart?.result?.[0];
+      const meta = result?.meta;
+      if (!result || !meta) continue;
+
+      const timestamps: number[] = result.timestamp || [];
+      const quotes = result.indicators?.quote?.[0] || {};
+      const quoteValues: (number | null)[] = quotes.close || [];
+      const openValues: (number | null)[] = quotes.open || [];
+      const highValues: (number | null)[] = quotes.high || [];
+      const lowValues: (number | null)[] = quotes.low || [];
+      const volumeValues: (number | null)[] = quotes.volume || [];
+
+      const points: YahooChartPoint[] = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const val = quoteValues[i];
+        if (typeof val === "number" && !isNaN(val)) {
+          const date = new Date(timestamps[i] * 1000);
+          const timeStr = date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            timeZone: "America/New_York",
+          });
+          const dateStr = date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: range === "1Y" || range === "5Y" || range === "ALL" ? "numeric" : undefined,
+            timeZone: "America/New_York",
+          });
+          points.push({
+            timestamp: timestamps[i],
+            dateStr,
+            timeStr,
+            price: Number(val.toFixed(2)),
+            open: typeof openValues[i] === "number" ? Number(openValues[i]!.toFixed(2)) : undefined,
+            high: typeof highValues[i] === "number" ? Number(highValues[i]!.toFixed(2)) : undefined,
+            low: typeof lowValues[i] === "number" ? Number(lowValues[i]!.toFixed(2)) : undefined,
+            volume: typeof volumeValues[i] === "number" ? volumeValues[i]! : undefined,
+          });
+        }
+      }
+
+      if (points.length === 0) continue;
+
+      const dayHigh =
+        typeof meta.regularMarketDayHigh === "number"
+          ? Number(meta.regularMarketDayHigh.toFixed(2))
+          : undefined;
+      const dayLow =
+        typeof meta.regularMarketDayLow === "number"
+          ? Number(meta.regularMarketDayLow.toFixed(2))
+          : undefined;
+      const fiftyTwoWeekHigh =
+        typeof meta.fiftyTwoWeekHigh === "number"
+          ? Number(meta.fiftyTwoWeekHigh.toFixed(2))
+          : undefined;
+      const fiftyTwoWeekLow =
+        typeof meta.fiftyTwoWeekLow === "number"
+          ? Number(meta.fiftyTwoWeekLow.toFixed(2))
+          : undefined;
+      const volume =
+        typeof meta.regularMarketVolume === "number"
+          ? meta.regularMarketVolume
+          : undefined;
+
+      return {
+        symbol: symbol.toUpperCase(),
+        currency: meta.currency || expectedCur,
+        previousClose: meta.chartPreviousClose || points[0].price,
+        currentPrice: meta.regularMarketPrice || points[points.length - 1].price,
+        dayHigh,
+        dayLow,
+        fiftyTwoWeekHigh,
+        fiftyTwoWeekLow,
+        volume,
+        points,
+        timeframe: range,
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
