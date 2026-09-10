@@ -18,6 +18,9 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
     if (apiKey.trim()) {
       setGeminiApiKey(apiKey.trim());
       setSaved(true);
+      if (store.stocks.value.length > 0) {
+        store.syncAllStocks();
+      }
       setTimeout(() => {
         setSaved(false);
         onClose();

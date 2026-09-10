@@ -59,6 +59,9 @@ export function Instructions({ multi }: InstructionsProps) {
       setIsKeyConfigured(true);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
+      if (store.stocks.value.length > 0) {
+        store.syncAllStocks();
+      }
     } else {
       clearGeminiApiKey();
       setApiKey("");
