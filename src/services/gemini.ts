@@ -165,33 +165,26 @@ export async function fetchLivePriceWithAI(
   const prompt = `You are an automated real-time financial market data agent.
 Look up the current financial quote for the ticker '${symbol}' (${name}) by searching: "${searchQuery}".
 
-CRITICAL GOOGLE FINANCE STRUCTURE RULES:
-1. HEADLINE PRICE VS "PREV. CLOSE":
-   - On Google Finance (e.g. google.com/finance/quote/${symbol}:OTCMKTS or NASDAQ/NYSE/TSX):
-     The CURRENT quote is the large bold number at the very top (e.g. "$13.10" alongside day change "-5.76% (-0.80) Today").
-   - The table stat labeled "Prev. close" (e.g. "$13.90") is the PREVIOUS trading day's closing benchmark.
-   - You MUST extract the large bold HEADLINE price (e.g. 13.10), NOT the "Prev. close" (e.g. 13.90)!
-   - If the stock closed at $13.10 down -0.80 (-5.76%) with Prev. close $13.90:
-     "price": 13.10,
-     "prevClose": 13.90,
-     "change": -0.80,
-     "percentChange": -5.76
-2. DO NOT REPORT "PREV. CLOSE", "OPEN", "HIGH", OR "LOW" AS THE PRICE:
-   - Always report the primary large headline price ($13.10).
-3. NATIVE CURRENCY:
+TARGET DATA:
+1. PRIMARY HEADLINE PRICE: Find the primary headline quote displayed at the top of Google Finance (google.com/finance) or Google Search for '${symbol}'.
+   - If the market is open right now, return the live trading price.
+   - If the market is currently closed, in after-hours, pre-market, or weekend/holiday, return the official regular session closing price from the most recently completed trading day (the main bold headline price at the top of Google Finance / Google Search).
+   - DO NOT report the session low, session high, 52-week low, bid, or ask price as the price. Always return the main headline price.
+2. NATIVE CURRENCY:
    - Must be strictly in ${expectedCurrency}.
    - Never convert ${expectedCurrency} to any other currency.
+3. DAY CHANGE & PERCENT CHANGE:
+   - Return the day change and percent change associated with this headline price.
 
 Provide the output strictly in this JSON format without markdown code blocks:
 {
-  "price": <numeric main headline price in ${expectedCurrency}, e.g. 13.10 or 317.50>,
-  "prevClose": <optional numeric previous close stat, e.g. 13.90>,
-  "change": <numeric day change in ${expectedCurrency}, e.g. -0.80 or +0.15>,
-  "percentChange": <numeric percent change, e.g. -5.76 or +0.50>,
+  "price": <numeric headline price in ${expectedCurrency}, e.g. 13.10 or 317.50>,
+  "change": <numeric day change in ${expectedCurrency}, e.g. +0.15 or -0.35>,
+  "percentChange": <numeric percent change, e.g. 1.15 or -0.50>,
   "dayHigh": <optional numeric day high in ${expectedCurrency}>,
   "dayLow": <optional numeric day low in ${expectedCurrency}>,
   "currency": "${expectedCurrency}",
-  "summary": <one-sentence explanation citing the quote source, e.g. "Google Finance regular session close for NTDOY is $13.10 (-5.76%).">
+  "summary": <one-sentence explanation citing the quote source, e.g. "Google Finance closing price for NTDOY is $13.10.">
 }
 Output only the JSON block without markdown backticks if possible, or inside a clean json code block.`;
 
@@ -218,30 +211,16 @@ Output only the JSON block without markdown backticks if possible, or inside a c
     }
   }
 
-  const change =
-    typeof parsed?.change === "number" ? parsed.change : undefined;
-  const percentChange =
-    typeof parsed?.percentChange === "number" ? parsed.percentChange : undefined;
-
-  // Mathematical integrity safeguard: If Gemini erroneously assigned the 'prevClose' number to 'price'
-  // (e.g. price = 13.90, prevClose = 13.90, change = -0.80),
-  // then the genuine headline price is prevClose + change (13.90 - 0.80 = 13.10).
-  if (
-    typeof price === "number" &&
-    typeof parsed?.prevClose === "number" &&
-    Math.abs(price - parsed.prevClose) < 0.001 &&
-    typeof change === "number" &&
-    Math.abs(change) > 0.001
-  ) {
-    price = Number((parsed.prevClose + change).toFixed(2));
-  }
-
   if (typeof price !== "number" || isNaN(price) || price <= 0) {
     throw new Error(
       `Could not reliably extract price from AI response: ${raw.slice(0, 150)}...`
     );
   }
 
+  const change =
+    typeof parsed?.change === "number" ? parsed.change : undefined;
+  const percentChange =
+    typeof parsed?.percentChange === "number" ? parsed.percentChange : undefined;
   const dayHigh =
     typeof parsed?.dayHigh === "number" ? Number(parsed.dayHigh.toFixed(2)) : undefined;
   const dayLow =
@@ -427,10 +406,10 @@ Perform a Google Search on Google Finance to find the current headline trading q
 ${stockListLines}
 
 CRITICAL RULES:
-1. HEADLINE PRICE VS "PREV. CLOSE":
-   - For each asset on Google Finance, extract the large bold HEADLINE price at the top (e.g. 13.10), NOT the "Prev. close" stat (e.g. 13.90).
-   - "Prev. close" is yesterday's baseline benchmark, NOT today's price!
-   - DO NOT report the "Prev. close", "Open", "High", or "Low" as the price.
+1. PRIMARY HEADLINE PRICE: For each asset, find the primary headline price displayed at the top of Google Finance (google.com/finance) or Google Search.
+   - If the market is open, report the live trading price.
+   - If the market is closed, in after-hours, pre-market, or weekend, report the official regular session closing price from the most recently completed trading session (the main bold headline quote).
+   - DO NOT report the session low, 52-week low, or bid/ask spread as the price.
 2. STRICT NATIVE CURRENCIES:
    - For US equities and ADRs (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA, NTDOY): Report strictly in USD (US Dollars).
    - For Canadian equities and ETFs (e.g. XEQT, SHOP, RY, VFV): Report strictly in CAD (Canadian Dollars).
@@ -440,8 +419,7 @@ CRITICAL RULES:
 Provide output strictly in this JSON format without markdown wrapping:
 {
   "SYMBOL": {
-    "price": <numeric main headline price in requested native currency>,
-    "prevClose": <optional numeric previous close stat>,
+    "price": <numeric headline price in requested native currency>,
     "change": <numeric day change in native currency>,
     "percentChange": <numeric percent change>,
     "dayHigh": <optional numeric day high in native currency>,
@@ -470,18 +448,8 @@ Provide output strictly in this JSON format without markdown wrapping:
           matchedStock?.currency
         );
 
-        let finalPrice = item.price;
-        if (
-          typeof item.prevClose === "number" &&
-          Math.abs(finalPrice - item.prevClose) < 0.001 &&
-          typeof item.change === "number" &&
-          Math.abs(item.change) > 0.001
-        ) {
-          finalPrice = Number((item.prevClose + item.change).toFixed(2));
-        }
-
         results[cleanKey] = {
-          price: Number(finalPrice.toFixed(2)),
+          price: Number(item.price.toFixed(2)),
           change: typeof item.change === "number" ? Number(item.change.toFixed(2)) : undefined,
           percentChange: typeof item.percentChange === "number" ? Number(item.percentChange.toFixed(2)) : undefined,
           dayHigh: typeof item.dayHigh === "number" ? Number(item.dayHigh.toFixed(2)) : undefined,
@@ -532,20 +500,19 @@ Perform a Google Search to determine if this is a publicly traded company, ETF, 
    - For US assets and international ADRs (e.g. Apple, Nintendo, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US or OTC ticker (e.g. AAPL, NTDOY, TM, SONY, RACE, NVO) and currency "USD".
 2. Identify the full official company or fund name.
 3. Identify the sector or asset category.
-4. Retrieve the primary large bold HEADLINE price and daily price change from Google Finance (google.com/finance).
-   - Extract the large bold headline price at the very top (e.g. 13.10), NOT the "Prev. close" stat (e.g. 13.90).
-   - "Prev. close" is yesterday's baseline benchmark, NOT today's price!
-   - DO NOT report the "Prev. close", "Open", "High", or "Low" as the price.
+4. Retrieve the primary headline price and daily price change in its native trading currency from Google Finance (google.com/finance).
+   - If the market is open, report the live trading price.
+   - If the market is closed or in after-hours, report the official regular session closing price from the most recently completed trading session (the main bold headline quote).
+   - DO NOT report the session low, 52-week low, or bid/ask spread as the price.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
   "found": true,
-  "symbol": <string ticker, uppercase, e.g. "RACE", "AC", "NTDOY">,
+  "symbol": <string ticker, uppercase, e.g. "RACE" or "AC">,
   "name": <string official company name, e.g. "Ferrari N.V." or "Air Canada">,
   "sector": <string sector, e.g. "Automotive & Luxury" or "Airlines">,
   "currency": <"USD" or "CAD">,
-  "price": <numeric main headline price>,
-  "prevClose": <optional numeric previous close stat>,
+  "price": <numeric current trading price>,
   "change": <numeric day change>,
   "percentChange": <numeric day percent change>
 }
@@ -567,16 +534,6 @@ If this company or ticker does not exist on public exchanges, return:
       throw new Error(parsed.error || `Could not find a public stock or ETF matching "${clean}".`);
     }
 
-    let finalPrice = parsed.price;
-    if (
-      typeof parsed.prevClose === "number" &&
-      Math.abs(finalPrice - parsed.prevClose) < 0.001 &&
-      typeof parsed.change === "number" &&
-      Math.abs(parsed.change) > 0.001
-    ) {
-      finalPrice = Number((parsed.prevClose + parsed.change).toFixed(2));
-    }
-
     const cleanSymbol = parsed.symbol.trim().toUpperCase();
     const cur = parsed.currency === "CAD" || cleanSymbol.endsWith(".TO") ? "CAD" : "USD";
 
@@ -585,7 +542,7 @@ If this company or ticker does not exist on public exchanges, return:
       name: parsed.name || cleanSymbol,
       sector: parsed.sector || "Global Equities",
       currency: cur,
-      price: Number(finalPrice.toFixed(2)),
+      price: Number(parsed.price.toFixed(2)),
       change: typeof parsed.change === "number" ? Number(parsed.change.toFixed(2)) : 0,
       percentChange: typeof parsed.percentChange === "number" ? Number(parsed.percentChange.toFixed(2)) : 0,
     };
