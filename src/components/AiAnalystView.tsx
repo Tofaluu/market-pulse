@@ -5,9 +5,7 @@ import {
   analyzeCompanyWithAI,
   getGeminiApiKey,
   type AnalysisTopic,
-  type LivePriceResult,
 } from "../services/gemini";
-import { store } from "../state";
 import type { Stock } from "../stocks";
 import { AiSettingsModal } from "./AiSettingsModal";
 
@@ -26,38 +24,9 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [customQuestion, setCustomQuestion] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [liveResult, setLiveResult] = useState<LivePriceResult | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const hasApiKey = Boolean(getGeminiApiKey());
-
-  const handleFetchPrice = async () => {
-    if (!hasApiKey) {
-      setIsSettingsOpen(true);
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMsg(null);
-    try {
-      const ok = await store.syncSingleStock(stock.symbol);
-      if (ok) {
-        setLiveResult({
-          price: stock.price,
-          change: stock.change,
-          percentChange: stock.percentChange,
-          sourceText: "Verified live via Gemini AI & Google Search",
-          timestamp: new Date().toLocaleTimeString(),
-        });
-      } else {
-        setErrorMsg("Failed to fetch live price via AI");
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to fetch live price via AI");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleRunAnalysis = async (topic: AnalysisTopic, question?: string) => {
     if (!hasApiKey) {
@@ -111,56 +80,24 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             </div>
 
             <div class="mt-2 flex items-baseline gap-3">
-              {store.isSyncing(stock.symbol) ? (
-                <div class="flex items-center gap-2.5">
-                  <span class="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-violet-400 animate-pulse">
-                    <svg class="h-5 w-5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Syncing live price...
-                  </span>
-                  <span class="text-xs text-zinc-500">Querying real-time quote via Gemini</span>
-                </div>
-              ) : (
-                <>
-                  <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                    {formatPrice(stock.price)}
-                  </span>
-                  <div
-                    class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
-                      stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
-                    }`}
-                  >
-                    <span>
-                      {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
-                    </span>
-                    <span>{stock.change >= 0 ? "↑" : "↓"}</span>
-                  </div>
-                  {liveResult && (
-                    <span class="text-xs text-emerald-400">
-                      • Verified live at {liveResult.timestamp}
-                    </span>
-                  )}
-                </>
-              )}
+              <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+                {formatPrice(stock.price)}
+              </span>
+              <div
+                class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
+                  stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
+                }`}
+              >
+                <span>
+                  {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
+                </span>
+                <span>{stock.change >= 0 ? "↑" : "↓"}</span>
+              </div>
             </div>
           </div>
 
-          {/* Live Price Fetch Button & AI Settings */}
+          {/* AI Settings */}
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleFetchPrice}
-              disabled={isLoading}
-              class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-900/30 hover:from-violet-500 hover:to-indigo-500 transition active:scale-95 disabled:opacity-50"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>{isLoading ? "Querying Web..." : "Query Real-World Live Price"}</span>
-            </button>
-
             <button
               type="button"
               onClick={() => setIsSettingsOpen(true)}
@@ -171,22 +108,6 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             </button>
           </div>
         </div>
-
-        {/* Live Search Price Result Banner */}
-        {liveResult && (
-          <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span class="text-xs font-bold text-emerald-300">
-                  Live Market Quote Verified: {formatPrice(liveResult.price)} {liveResult.currency}
-                </span>
-              </div>
-              <span class="text-[11px] text-zinc-400">Fetched via Google Search</span>
-            </div>
-            <p class="mt-1.5 text-xs text-zinc-300">{liveResult.sourceText}</p>
-          </div>
-        )}
 
         {/* Error Alert */}
         {errorMsg && (

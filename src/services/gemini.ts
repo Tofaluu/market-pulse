@@ -162,32 +162,37 @@ export async function fetchLivePriceWithAI(
     expectedCurrency === "CAD"
       ? "TSX (Toronto Stock Exchange) in Canadian Dollars (CAD)"
       : "NASDAQ or NYSE in US Dollars (USD)";
+  const tickerQuery = expectedCurrency === "CAD" ? `${symbol} stock TSE` : `${symbol} stock`;
 
   const prompt = `You are a real-time financial market data agent.
 TEMPORAL CONTEXT:
 - Today's date: ${dateStr}
 - Current Eastern Time: ${timeStr} ET
 
-Perform a Google Search to determine the current, up-to-date real-world trading price for the asset/stock ticker '${symbol}' (${name}).
-This asset trades natively on ${exchangeDesc}.
+Perform a Google Search with this exact query: "${tickerQuery}".
+This asset (${name}) trades natively on ${exchangeDesc}.
 
-CRITICAL PRICING & CURRENCY RULES:
-1. DATA SOURCE ANCHOR: Anchor directly to the official Google Finance (google.com/finance) quote box or official exchange feed (NYSE/NASDAQ/TSX).
-2. STRICT NATIVE CURRENCY: Report the price and day changes strictly in ${expectedCurrency}.
-   - NEVER convert ${expectedCurrency} to any other currency (e.g. DO NOT convert US stocks to CAD or Canadian stocks to USD).
-3. DO NOT return the "Previous Close" (which is the closing price from the prior day).
-4. REGULAR CLOSE VS AFTER-HOURS:
-   - If the market is open (9:30 AM - 4:00 PM ET), report the live real-time trading price and ensure it is the accurate and not the closing price for the previous day
-   - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S official regular session closing price (the 4:00 PM ET close matching Google Finance's headline quote and brokerages like Wealthsimple), NOT after-hours post-market ticks and NOT yesterday's close.
-5. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
+CRITICAL SEARCH & GOOGLE FINANCE WIDGET EXTRACTION INSTRUCTIONS:
+1. TARGET THE HEADLINE GOOGLE FINANCE QUOTE BOX:
+   - When searching "${tickerQuery}", Google displays a primary quote widget box at the top of search results.
+   - The CURRENT TRADING PRICE is the large prominent number displayed beside the currency code (${expectedCurrency}) (e.g. "44.83 CAD" or "331.96 USD").
+   - The DAY CHANGE and PERCENT CHANGE are displayed immediately adjacent to that headline number (e.g. "-0.37 (-0.82%) today").
+2. REGULAR HOURS VS AFTER-HOURS:
+   - If the market is open (9:30 AM - 4:00 PM ET), report the active live real-time trading price from that headline.
+   - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S (${dateStr}) official regular session closing price from that headline, NOT yesterday's close.
+3. CRITICAL DISAMBIGUATION RULES (AVOID COMMON ERRORS):
+   - DO NOT report the "Previous close" as the current price! "Previous close" is yesterday's closing price.
+   - DO NOT report Open, Day High, Day Low, 52-wk high, or 52-wk low as the current price (e.g. for GOOGL, do not report the day's high of $338.72).
+   - DO NOT pick numbers from the "Related" or "People also search for" sidebar on the screen.
+   - STRICT NATIVE CURRENCY: Report strictly in ${expectedCurrency}. Never convert between USD and CAD.
 
 Provide the output strictly in this JSON format:
 {
-  "price": <numeric price in ${expectedCurrency}, e.g. 317.50 or 45.45>,
-  "change": <numeric day change in ${expectedCurrency}, e.g. +2.05 or -0.35>,
-  "percentChange": <numeric percent change, e.g. 0.65 or -0.50>,
-  "dayHigh": <numeric day high in ${expectedCurrency}, e.g. 319.15>,
-  "dayLow": <numeric day low in ${expectedCurrency}, e.g. 314.80>,
+  "price": <numeric current trading price in ${expectedCurrency}, e.g. 44.83 or 331.96>,
+  "change": <numeric day change in ${expectedCurrency}, e.g. -0.37 or +2.15>,
+  "percentChange": <numeric percent change, e.g. -0.82 or 0.65>,
+  "dayHigh": <optional numeric day high in ${expectedCurrency}>,
+  "dayLow": <optional numeric day low in ${expectedCurrency}>,
   "currency": "${expectedCurrency}",
   "summary": <one-sentence summary of today's price and market movement>
 }
@@ -216,14 +221,15 @@ Output only the JSON block without markdown backticks if possible, or inside a c
     }
   }
 
+  const change =
+    typeof parsed?.change === "number" ? parsed.change : undefined;
+
   if (typeof price !== "number" || isNaN(price) || price <= 0) {
     throw new Error(
       `Could not reliably extract price from AI response: ${raw.slice(0, 150)}...`
     );
   }
 
-  const change =
-    typeof parsed?.change === "number" ? parsed.change : undefined;
   const percentChange =
     typeof parsed?.percentChange === "number" ? parsed.percentChange : undefined;
   const dayHigh =
@@ -421,18 +427,24 @@ TEMPORAL CONTEXT:
 Perform a Google Search to find current, up-to-date real-world trading prices for each of these assets:
 ${stockListLines}
 
-CRITICAL PRICING & CURRENCY RULES:
-1. STRICT PER-ASSET NATIVE CURRENCIES:
-   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD!
+SEARCH & GOOGLE FINANCE WIDGET EXTRACTION INSTRUCTIONS:
+1. TARGET GOOGLE FINANCE HEADLINE QUOTES:
+   - For each asset, query "<SYMBOL> stock" (or "<SYMBOL> stock TSE" for Canadian equities) to trigger the Google Finance headline quote widget.
+   - The CURRENT PRICE is the large prominent headline number displayed next to the currency code (e.g. "44.83 CAD" or "331.96 USD").
+   - If the market is open (9:30 AM - 4:00 PM ET), report the active real-time trading price from that headline.
+   - If the market is closed or in after-hours (4:00 PM - 8:00 PM ET), report TODAY'S (${dateStr}) official regular session closing price from that headline, NOT yesterday's close.
+2. STRICT PER-ASSET NATIVE CURRENCIES:
+   - For US equities (e.g. AAPL, NVDA, MSFT, GOOGL, AMZN, META, TSLA, NTDOY): Report strictly in USD (US Dollars). NEVER convert US stocks into CAD!
    - For Canadian equities and ETFs (e.g. XEQT, SHOP, RY, VFV): Report strictly in CAD (Canadian Dollars).
-2. DO NOT report the "Previous Close" (which is yesterday's / the prior day's close).
-3. If the market is closed or in after-hours, report the official closing price from TODAY'S (${dateStr}) trading session, NOT yesterday's close.
-4. If today is a weekend or market holiday, report the closing price of the most recent active trading day (e.g. Friday), NOT the day before that.
+3. CRITICAL DISAMBIGUATION RULES (AVOID COMMON ERRORS):
+   - DO NOT report "Previous close" as the current price! "Previous close" is yesterday's close.
+   - DO NOT report Open, Day High, Day Low, 52-wk high, or 52-wk low as the current price (e.g. for GOOGL, do not report the day's high of $338.72).
+   - DO NOT pick prices from the "Related" sidebar on the screen.
 
 Provide output strictly in this JSON format without markdown wrapping:
 {
   "SYMBOL": {
-    "price": <numeric price in requested native currency>,
+    "price": <numeric current trading price in requested native currency>,
     "change": <numeric day change in native currency>,
     "percentChange": <numeric percent change>,
     "dayHigh": <optional numeric day high in native currency>,

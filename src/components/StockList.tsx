@@ -1,26 +1,10 @@
-import { useState } from "preact/hooks";
 import { formatPercentChange, formatPrice } from "../format";
 import { store } from "../state";
-import { hasGeminiApiKey } from "../services/gemini";
-import { AiSettingsModal } from "./AiSettingsModal";
 
 export function StockList() {
   const stocks = store.filteredStocks.value;
   const totalCount = store.stocks.value.length;
   const searchQuery = store.searchQuery.value;
-
-  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
-  const isSyncing = store.isSyncingAll.value;
-  const syncMessage = store.syncMessage.value;
-
-  const handleSyncAll = () => {
-    if (!hasGeminiApiKey()) {
-      setIsAiSettingsOpen(true);
-      return;
-    }
-    if (store.stocks.value.length === 0) return;
-    store.syncAllStocks();
-  };
 
   return (
     <aside class="flex h-full w-[310px] shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -33,40 +17,7 @@ export function StockList() {
               {totalCount}
             </span>
           </div>
-
-          <button
-            type="button"
-            onClick={handleSyncAll}
-            disabled={isSyncing || totalCount === 0}
-            title={
-              hasGeminiApiKey()
-                ? "Refresh all stock prices using Gemini AI & Google Search"
-                : "Set Gemini API Key to fetch live real-world prices"
-            }
-            class="flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 text-[11px] font-medium text-violet-300 hover:bg-violet-500/25 transition disabled:opacity-50"
-          >
-            {isSyncing ? (
-              <>
-                <svg class="h-3 w-3 animate-spin text-violet-300" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Syncing...</span>
-              </>
-            ) : (
-              <>
-                <span>✨</span>
-                <span>Sync All</span>
-              </>
-            )}
-          </button>
         </div>
-
-        {syncMessage && (
-          <div class="mb-2 rounded border border-violet-500/30 bg-violet-950/40 px-2 py-1 text-[10px] font-medium text-violet-200 animate-in fade-in">
-            {syncMessage}
-          </div>
-        )}
 
         {/* Live Filter Input */}
         <div class="relative">
@@ -139,23 +90,13 @@ export function StockList() {
                   </div>
 
                   <div class="text-right">
-                    {store.isSyncing(stock.symbol) ? (
-                      <span class="inline-flex items-center gap-1 text-[11px] font-medium text-violet-400 animate-pulse">
-                        <svg class="h-2.5 w-2.5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Syncing...</span>
-                      </span>
-                    ) : (
-                      <span
-                        class={`text-xs font-bold tabular-nums ${
-                          isPositive ? "text-emerald-400" : "text-rose-400"
-                        }`}
-                      >
-                        {formatPrice(stock.price)}
-                      </span>
-                    )}
+                    <span
+                      class={`text-xs font-bold tabular-nums ${
+                        isPositive ? "text-emerald-400" : "text-rose-400"
+                      }`}
+                    >
+                      {formatPrice(stock.price)}
+                    </span>
                   </div>
                 </div>
 
@@ -166,22 +107,16 @@ export function StockList() {
                   </span>
 
                   <div class="shrink-0">
-                    {store.isSyncing(stock.symbol) ? (
-                      <div class="rounded-md px-1.5 py-0.5 text-[10px] font-medium text-violet-300 bg-violet-500/15">
-                        Syncing...
-                      </div>
-                    ) : (
-                      <div
-                        class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
-                          isPositive
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "bg-rose-500/10 text-rose-400"
-                        }`}
-                      >
-                        <span>{formatPercentChange(stock.percentChange)}</span>
-                        <span>{isPositive ? "↑" : "↓"}</span>
-                      </div>
-                    )}
+                    <div
+                      class={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
+                        isPositive
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : "bg-rose-500/10 text-rose-400"
+                      }`}
+                    >
+                      <span>{formatPercentChange(stock.percentChange)}</span>
+                      <span>{isPositive ? "↑" : "↓"}</span>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -189,11 +124,6 @@ export function StockList() {
           })
         )}
       </div>
-
-      <AiSettingsModal
-        isOpen={isAiSettingsOpen}
-        onClose={() => setIsAiSettingsOpen(false)}
-      />
     </aside>
   );
 }

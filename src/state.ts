@@ -12,6 +12,10 @@ import {
   type BatchPriceResult,
   type ResolvedAsset,
 } from "./services/gemini";
+import {
+  fetchYahooFinanceQuote,
+  batchFetchYahooFinanceQuotes,
+} from "./services/yahooFinance";
 import { setLastSyncTimestamp } from "./services/smartSync";
 
 export type ViewMode = "chart" | "ai";
@@ -285,7 +289,6 @@ class StockStore {
   }
 
   async syncAllStocks(silent = false): Promise<boolean> {
-    if (!hasGeminiApiKey()) return false;
     if (this.stocks.value.length === 0) return false;
     if (this.isSyncingAll.value) return false;
 
@@ -293,10 +296,28 @@ class StockStore {
     if (!silent) this.syncMessage.value = null;
 
     try {
-      const results = await batchFetchLivePricesWithAI(this.stocks.value);
-      const count = Object.keys(results).length;
+      // 1. Fetch real-time market quotes from Yahoo Finance
+      const yahooResults = await batchFetchYahooFinanceQuotes(this.stocks.value);
+      let mergedResults: BatchPriceResult = { ...yahooResults };
+
+      // 2. For any stock missing from Yahoo, fall back to Gemini AI if API key is present
+      const missingStocks = this.stocks.value.filter(
+        (s) => !mergedResults[s.symbol.toUpperCase()]
+      );
+
+      if (missingStocks.length > 0 && hasGeminiApiKey()) {
+        try {
+          const aiResults = await batchFetchLivePricesWithAI(missingStocks);
+          mergedResults = { ...mergedResults, ...aiResults };
+        } catch {
+          // Keep whatever Yahoo returned
+        }
+      }
+
+      const count = Object.keys(mergedResults).length;
       if (count > 0) {
-        this.batchUpdatePrices(results);
+        this.batchUpdatePrices(mergedResults);
+        setLastSyncTimestamp();
         if (!silent) {
           this.syncMessage.value = `✓ Synced ${count} stocks with live quotes`;
         }
@@ -324,29 +345,53 @@ class StockStore {
     const clean = symbol.trim().toUpperCase();
     const stock = this.stocks.value.find((s) => s.symbol === clean);
     if (!stock) return false;
-    if (!hasGeminiApiKey()) return false;
 
     const nextSyncing = new Set(this.syncingSymbols.value);
     nextSyncing.add(clean);
     this.syncingSymbols.value = nextSyncing;
 
     try {
-      const result = await fetchLivePriceWithAI(
+      // 1. Try Yahoo Finance real-time quote first
+      const yahooResult = await fetchYahooFinanceQuote(
         stock.symbol,
-        stock.name,
-        stock.currency,
-        stock.sector
+        stock.sector,
+        stock.currency
       );
-      this.updateStockPrice(
-        stock.symbol,
-        result.price,
-        result.change,
-        result.percentChange,
-        result.dayHigh,
-        result.dayLow,
-        result.currency
-      );
-      return true;
+
+      if (yahooResult) {
+        this.updateStockPrice(
+          stock.symbol,
+          yahooResult.price,
+          yahooResult.change,
+          yahooResult.percentChange,
+          yahooResult.dayHigh,
+          yahooResult.dayLow,
+          yahooResult.currency
+        );
+        return true;
+      }
+
+      // 2. Fall back to Gemini AI if API key is configured
+      if (hasGeminiApiKey()) {
+        const result = await fetchLivePriceWithAI(
+          stock.symbol,
+          stock.name,
+          stock.currency,
+          stock.sector
+        );
+        this.updateStockPrice(
+          stock.symbol,
+          result.price,
+          result.change,
+          result.percentChange,
+          result.dayHigh,
+          result.dayLow,
+          result.currency
+        );
+        return true;
+      }
+
+      return false;
     } catch (err) {
       console.warn(`Failed to live-sync price for ${clean}:`, err);
       return false;
@@ -423,6 +468,7 @@ class StockStore {
     };
 
     this.addStock(newStock);
+    this.syncSingleStock(newStock.symbol);
   }
 
   addStockBySymbol(symbol: string) {
@@ -439,9 +485,7 @@ class StockStore {
     const existingInCatalog = stockRecords.find((s) => s.symbol === cleanSymbol);
     const stock = existingInCatalog ? { ...existingInCatalog } : createStockFromTicker(cleanSymbol);
     this.addStock(stock);
-    if (hasGeminiApiKey()) {
-      this.syncSingleStock(stock.symbol);
-    }
+    this.syncSingleStock(stock.symbol);
   }
 
   private addStock(stock: Stock) {

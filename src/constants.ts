@@ -7,14 +7,13 @@ export const WELCOME_TEXT = {
   title: "Welcome to MarketPulse",
   subtitle: "Institutional-grade market tracker & equity research terminal.",
   supported: [
-    "Live Market Sync - Real-time stock prices & 1-click portfolio sync grounded in Google Search via Gemini AI.",
-    "AI Equity Research - In-depth institutional analysis covering company moats, weekly drivers, trajectory, and risks.",
-    "Global Stock Discovery - Search any company name or ticker worldwide to automatically resolve and add to your watchlist.",
+    "Live Market Feeds - Real-time stock prices, automatic 20-second updates during market hours, and instant sync on add.",
+    "AI Equity Research - In-depth institutional analysis powered by Gemini AI covering company moats, weekly drivers, and risks.",
+    "Global Stock Discovery - Search any company name or ticker worldwide (TSX, NYSE, NASDAQ) to add to your watchlist.",
     "Interactive Financial Charts - Clean vector charts with timeframe toggles, hover crosshairs, and performance metrics.",
   ],
   shortcuts: [
-    "Shift-A - add stock to watchlist",
-    "Shift-D - delete selected stocks",
+    "Delete - delete selected stock(s)",
     "Shift-C - clear selection",
     "Shift-U - undo last action",
     "Shift-R - redo action",

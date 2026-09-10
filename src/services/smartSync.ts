@@ -2,7 +2,6 @@
 // Automatically synchronizes stock prices at market open (9:30 AM ET) and close (4:00 PM ET)
 // without requiring persistent backend infrastructure.
 import { store } from "../state";
-import { hasGeminiApiKey } from "./gemini";
 
 const LAST_SYNC_KEY = "marketpulse_last_sync_timestamp";
 
@@ -76,17 +75,28 @@ export function isCatchUpSyncDue(lastSync: number | null): boolean {
   // If clock moved backwards, don't trigger
   if (nowMs < lastMs) return false;
 
-  // If synced within the last 5 minutes, avoid spamming
-  if (nowMs - lastMs < 5 * 60 * 1000) return false;
-
-  // If more than 7 days ago, definitely due
-  if (nowMs - lastMs > 7 * 24 * 60 * 60 * 1000) return true;
-
   const nowEt = getEtTimeInfo(now);
   const lastEt = getEtTimeInfo(lastDate);
 
   const OPEN_MINUTES = 570; // 9:30 AM ET
   const CLOSE_MINUTES = 960; // 4:00 PM ET
+
+  // Dynamic In-Session Live Polling:
+  // If the market is currently OPEN (regular session on weekdays), poll every 20 seconds
+  if (
+    nowEt.isWeekday &&
+    nowEt.minutesSinceMidnight >= OPEN_MINUTES &&
+    nowEt.minutesSinceMidnight < CLOSE_MINUTES
+  ) {
+    return nowMs - lastMs >= 20 * 1000;
+  }
+
+  // Outside market hours:
+  // Avoid spamming if synced within the last 5 minutes
+  if (nowMs - lastMs < 5 * 60 * 1000) return false;
+
+  // If more than 7 days ago, definitely due
+  if (nowMs - lastMs > 7 * 24 * 60 * 60 * 1000) return true;
 
   // Case 1: Same calendar day in Eastern Time
   if (nowEt.year === lastEt.year && nowEt.month === lastEt.month && nowEt.day === lastEt.day) {
@@ -124,23 +134,22 @@ export function isCatchUpSyncDue(lastSync: number | null): boolean {
 }
 
 /**
- * Evaluates sync state and triggers automatic batch sync if a market milestone has passed.
+ * Evaluates sync state and triggers automatic batch sync if a market milestone has passed
+ * or if dynamic live updates are due during market hours.
  */
 export async function checkAndTriggerCatchUpSync(): Promise<boolean> {
-  if (!hasGeminiApiKey()) return false;
   if (store.stocks.value.length === 0) return false;
   if (store.isSyncingAll.value) return false;
 
   const lastSync = getLastSyncTimestamp();
   if (!isCatchUpSyncDue(lastSync)) return false;
 
-  console.log("[SmartSync] Auto catch-up sync initiated for market milestone.");
   await store.syncAllStocks(true);
   return true;
 }
 
 /**
- * Initializes automatic background listeners for catch-up syncing.
+ * Initializes automatic background listeners for catch-up syncing and live in-session updates.
  */
 export function initSmartCatchUpSync(): () => void {
   // 1. Initial check when app loads
@@ -159,10 +168,12 @@ export function initSmartCatchUpSync(): () => void {
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener("focus", handleFocus);
 
-  // 3. Periodic check every 30 seconds while tab remains open
+  // 3. Periodic check every 15 seconds while tab remains open
   const intervalId = setInterval(() => {
-    checkAndTriggerCatchUpSync();
-  }, 30 * 1000);
+    if (document.visibilityState === "visible") {
+      checkAndTriggerCatchUpSync();
+    }
+  }, 15 * 1000);
 
   return () => {
     document.removeEventListener("visibilitychange", handleVisibilityChange);

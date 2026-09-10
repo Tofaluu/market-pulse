@@ -206,7 +206,7 @@ export function Instructions({ multi }: InstructionsProps) {
           </div>
 
           <p class="mt-2.5 text-sm text-zinc-300 leading-relaxed">
-            A Gemini API key is recommended to enable live stock searches, real-time Google Search price synchronization, and AI analyst research.
+            A Gemini API key is recommended to enable AI equity research, deep analyst reports, and intelligent asset discovery. Live market prices sync automatically via real-time exchange feeds.
           </p>
 
           <form
