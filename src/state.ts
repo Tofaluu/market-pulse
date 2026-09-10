@@ -181,7 +181,6 @@ class StockStore {
         newPctChange !== undefined
           ? newPctChange
           : Number(((change / s.open) * 100).toFixed(2));
-      const direction: "up" | "down" = newPrice >= s.price ? "up" : "down";
 
       const updatedHistory = (s.history || []).map((h) =>
         h.year === 2026 ? { ...h, price: newPrice } : h
@@ -195,7 +194,6 @@ class StockStore {
         percentChange,
         dayHigh: Math.max(s.dayHigh, newPrice),
         dayLow: Math.min(s.dayLow, newPrice),
-        flash: direction,
         intraday: updatedIntraday,
         history: updatedHistory,
       };
@@ -227,8 +225,6 @@ class StockStore {
         update.percentChange !== undefined
           ? update.percentChange
           : Number(((change / stock.open) * 100).toFixed(2));
-      const direction: "up" | "down" =
-        update.price >= stock.price ? "up" : "down";
 
       const updatedHistory = (stock.history || []).map((h) =>
         h.year === 2026 ? { ...h, price: update.price } : h
@@ -242,7 +238,6 @@ class StockStore {
         percentChange,
         dayHigh: Math.max(stock.dayHigh, update.price),
         dayLow: Math.min(stock.dayLow, update.price),
-        flash: direction,
         intraday: updatedIntraday,
         history: updatedHistory,
       };

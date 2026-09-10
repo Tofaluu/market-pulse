@@ -128,8 +128,6 @@ export function StockList({ onBackgroundClick }: StockListProps) {
           stocks.map((stock) => {
             const selected = store.isSelected(stock.symbol);
             const isPositive = stock.change >= 0;
-            const flashClass =
-              stock.flash === "up" ? "flash-up" : stock.flash === "down" ? "flash-down" : "";
 
             // Generate miniature SVG sparkline from intraday prices
             const sparkPoints = stock.intraday || [];
@@ -151,7 +149,7 @@ export function StockList({ onBackgroundClick }: StockListProps) {
               <button
                 key={stock.symbol}
                 type="button"
-                class={`group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all ${flashClass} ${
+                class={`group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all ${
                   selected
                     ? "border-emerald-500/50 bg-zinc-850/90 shadow-md ring-1 ring-emerald-500/20"
                     : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-850/60"
@@ -181,12 +179,8 @@ export function StockList({ onBackgroundClick }: StockListProps) {
                       </span>
                     ) : (
                       <span
-                        class={`text-xs font-semibold tabular-nums transition-colors ${
-                          stock.flash === "up"
-                            ? "text-emerald-400 font-bold"
-                            : stock.flash === "down"
-                            ? "text-rose-400 font-bold"
-                            : "text-zinc-100"
+                        class={`text-xs font-bold tabular-nums ${
+                          isPositive ? "text-emerald-400" : "text-rose-400"
                         }`}
                       >
                         {formatPrice(stock.price)}
