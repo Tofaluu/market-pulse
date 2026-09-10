@@ -2,6 +2,7 @@ import { useMemo, useState } from "preact/hooks";
 import { formatPrice } from "../format";
 import { store } from "../state";
 import { GLOBAL_TICKER_DIRECTORY, type TickerInfo } from "../tickerDatabase";
+import { hasGeminiApiKey, searchAndResolveStockWithAI } from "../services/gemini";
 
 type AddStockModalProps = {
   isOpen: boolean;
@@ -15,7 +16,8 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
 
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<SectorCategory>("All");
-  const [customName, setCustomName] = useState("");
+  const [isAiSearching, setIsAiSearching] = useState(false);
+  const [aiSearchError, setAiSearchError] = useState<string | null>(null);
 
   const currentSymbols = useMemo(
     () => new Set(store.stocks.value.map((s) => s.symbol.toUpperCase())),
@@ -66,10 +68,27 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
     onClose();
   };
 
-  const handleAddCustom = () => {
-    if (!cleanQuery) return;
-    store.addCustomStock(cleanQuery, customName || undefined);
-    onClose();
+  const handleAiSearchAndAdd = async () => {
+    const term = query.trim();
+    if (!term || isAiSearching) return;
+
+    if (!hasGeminiApiKey()) {
+      setAiSearchError("Please configure your Gemini API Key in Settings to search global exchanges.");
+      return;
+    }
+
+    setIsAiSearching(true);
+    setAiSearchError(null);
+
+    try {
+      const resolved = await searchAndResolveStockWithAI(term);
+      store.addVerifiedStock(resolved);
+      onClose();
+    } catch (err: any) {
+      setAiSearchError(err.message || `Could not find a publicly traded stock or ETF for "${term}".`);
+    } finally {
+      setIsAiSearching(false);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,8 +97,8 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
     } else if (e.key === "Enter") {
       if (filteredTickers.length > 0 && !currentSymbols.has(filteredTickers[0].symbol)) {
         handleAddTicker(filteredTickers[0]);
-      } else if (cleanQuery && !isAlreadyInWatchlist) {
-        handleAddCustom();
+      } else if (query.trim() && !isAlreadyInWatchlist) {
+        handleAiSearchAndAdd();
       }
     }
   };
@@ -171,43 +190,52 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
 
         {/* Results List */}
         <div class="flex-1 overflow-y-auto p-4 space-y-2">
-          {/* Custom Ticker Direct Add Option */}
+          {/* AI Global Asset Search for any non-directory company or ticker */}
           {cleanQuery && !exactMatch && (
-            <div class="mb-3 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-950/20 p-3.5">
-              <div class="flex items-center justify-between">
-                <div>
+            <div class="mb-3 rounded-xl border border-violet-500/30 bg-violet-950/20 p-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">
-                      {cleanQuery}
+                    <span class="rounded bg-violet-500/20 px-2 py-0.5 text-xs font-bold text-violet-300 shrink-0">
+                      AI Global Search
                     </span>
-                    <span class="text-xs font-medium text-zinc-200">
-                      Create Custom Asset
+                    <span class="text-xs font-bold text-zinc-100 truncate">
+                      "{query.trim()}"
                     </span>
                   </div>
                   <p class="mt-1 text-[11px] text-zinc-400">
-                    Add "{cleanQuery}" — live price will sync automatically
+                    Search all NYSE, NASDAQ & TSX listings with Gemini AI to identify this company, its real ticker & live price.
                   </p>
                 </div>
+
                 <button
                   type="button"
-                  onClick={handleAddCustom}
-                  disabled={isAlreadyInWatchlist}
-                  class="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow hover:bg-emerald-500 transition disabled:opacity-50"
+                  onClick={handleAiSearchAndAdd}
+                  disabled={isAiSearching}
+                  class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-violet-900/30 hover:from-violet-500 hover:to-indigo-500 transition active:scale-95 disabled:opacity-50 shrink-0"
                 >
-                  {isAlreadyInWatchlist ? "In Watchlist" : `+ Add ${cleanQuery}`}
+                  {isAiSearching ? (
+                    <>
+                      <svg class="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Searching AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔍</span>
+                      <span>Find & Add</span>
+                    </>
+                  )}
                 </button>
               </div>
 
-              {/* Optional Company Name Input */}
-              <div class="mt-2.5">
-                <input
-                  type="text"
-                  value={customName}
-                  onInput={(e) => setCustomName((e.target as HTMLInputElement).value)}
-                  placeholder={`Optional: Custom name for ${cleanQuery} (default: ${cleanQuery} Inc.)`}
-                  class="w-full rounded-lg border border-zinc-800 bg-zinc-900/90 px-3 py-1 text-xs text-zinc-200 placeholder-zinc-500 focus:border-emerald-500/50 focus:outline-none"
-                />
-              </div>
+              {aiSearchError && (
+                <div class="mt-2.5 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-300">
+                  ⚠️ {aiSearchError}
+                </div>
+              )}
             </div>
           )}
 

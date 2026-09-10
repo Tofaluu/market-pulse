@@ -10,6 +10,7 @@ import {
   fetchLivePriceWithAI,
   hasGeminiApiKey,
   type BatchPriceResult,
+  type ResolvedAsset,
 } from "./services/gemini";
 import { setLastSyncTimestamp } from "./services/smartSync";
 
@@ -395,22 +396,36 @@ class StockStore {
     return GLOBAL_TICKER_DIRECTORY.filter((stock) => !current.has(stock.symbol));
   }
 
-  addCustomStock(symbol: string, name?: string, price?: number, sector?: string) {
+  addVerifiedStock(resolved: ResolvedAsset) {
     if (!this.canAdd.value) return;
-    const cleanSymbol = symbol.trim().toUpperCase();
-    if (!cleanSymbol) return;
-
+    const cleanSymbol = resolved.symbol.trim().toUpperCase();
     if (this.stocks.value.some((s) => s.symbol === cleanSymbol)) {
       this.selectedSymbols.value = new Set([cleanSymbol]);
       this.viewMode.value = "chart";
       return;
     }
 
-    const stock = createStockFromTicker(cleanSymbol, name, price, sector);
-    this.addStock(stock);
-    if (hasGeminiApiKey()) {
-      this.syncSingleStock(stock.symbol);
-    }
+    const open = Number((resolved.price - resolved.change).toFixed(2));
+    const newStock: Stock = {
+      symbol: cleanSymbol,
+      name: resolved.name,
+      sector: resolved.sector,
+      currency: resolved.currency,
+      price: resolved.price,
+      change: resolved.change,
+      percentChange: resolved.percentChange,
+      open,
+      dayHigh: Math.max(resolved.price, open),
+      dayLow: Math.min(resolved.price, open),
+      volume: 0,
+      peRatio: 0,
+      date: new Date().toISOString(),
+      mcap: "—",
+      history: [],
+      intraday: generateIntraday(resolved.price, resolved.change),
+    };
+
+    this.addStock(newStock);
   }
 
   addStockBySymbol(symbol: string) {

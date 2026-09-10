@@ -468,3 +468,87 @@ Provide output strictly in this JSON format without markdown wrapping:
     return {};
   }
 }
+
+export type ResolvedAsset = {
+  symbol: string;
+  name: string;
+  sector: string;
+  currency: "USD" | "CAD";
+  price: number;
+  change: number;
+  percentChange: number;
+};
+
+/**
+ * Uses Gemini with Google Search to identify any company name or ticker on global exchanges,
+ * retrieve its official symbol, exchange, currency, and real live trading price.
+ */
+export async function searchAndResolveStockWithAI(
+  query: string
+): Promise<ResolvedAsset> {
+  const clean = query.trim();
+  if (!clean) {
+    throw new Error("Please enter a stock ticker or company name to search.");
+  }
+
+  const { dateStr, timeStr } = getMarketDateContext();
+  const prompt = `You are a real-time financial market asset identifier.
+TEMPORAL CONTEXT:
+- Today's date: ${dateStr}
+- Current Eastern Time: ${timeStr} ET
+
+The user wants to find and add this asset or company to their stock watchlist: "${clean}".
+
+Perform a Google Search to determine if this is a publicly traded company, ETF, or stock on major North American exchanges (NYSE, NASDAQ, TSX Toronto Stock Exchange):
+1. Identify the official exchange ticker symbol.
+   - For Canadian assets (e.g. Air Canada, Telus, Royal Bank, Canadian Pacific), use the TSX ticker (e.g. AC, T, RY, CP) and currency "CAD".
+   - For US assets (e.g. Apple, Toyota, Sony, Ferrari, Novo Nordisk), use the primary US ticker (e.g. AAPL, TM, SONY, RACE, NVO) and currency "USD".
+2. Identify the full official company or fund name.
+3. Identify the sector or asset category.
+4. Retrieve the current trading price and daily price change in its native trading currency.
+
+Provide output strictly in this JSON format without markdown wrapping:
+{
+  "found": true,
+  "symbol": <string ticker, uppercase, e.g. "RACE" or "AC">,
+  "name": <string official company name, e.g. "Ferrari N.V." or "Air Canada">,
+  "sector": <string sector, e.g. "Automotive & Luxury" or "Airlines">,
+  "currency": <"USD" or "CAD">,
+  "price": <numeric current trading price>,
+  "change": <numeric day change>,
+  "percentChange": <numeric day percent change>
+}
+If this company or ticker does not exist on public exchanges, return:
+{
+  "found": false,
+  "error": "No publicly traded stock or ETF was found for '${clean}'."
+}`;
+
+  const raw = await callGemini(prompt, true);
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error(`Could not parse market search response for "${clean}".`);
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed.found || !parsed.symbol || typeof parsed.price !== "number") {
+      throw new Error(parsed.error || `Could not find a public stock or ETF matching "${clean}".`);
+    }
+
+    const cleanSymbol = parsed.symbol.trim().toUpperCase();
+    const cur = parsed.currency === "CAD" || cleanSymbol.endsWith(".TO") ? "CAD" : "USD";
+
+    return {
+      symbol: cleanSymbol,
+      name: parsed.name || cleanSymbol,
+      sector: parsed.sector || "Global Equities",
+      currency: cur,
+      price: Number(parsed.price.toFixed(2)),
+      change: typeof parsed.change === "number" ? Number(parsed.change.toFixed(2)) : 0,
+      percentChange: typeof parsed.percentChange === "number" ? Number(parsed.percentChange.toFixed(2)) : 0,
+    };
+  } catch (err: any) {
+    throw new Error(err.message || `Failed to identify stock for "${clean}".`);
+  }
+}
