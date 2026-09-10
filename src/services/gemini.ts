@@ -266,8 +266,12 @@ export async function analyzeCompanyWithAI(
   topic: AnalysisTopic,
   customQuestion?: string
 ): Promise<string> {
+  const { dateStr } = getMarketDateContext();
   const commonDirectives = `
-IMPORTANT DIRECTIVES:
+TEMPORAL CONTEXT & ACTIVE RESEARCH DIRECTIVES:
+- Today's Date: ${dateStr}.
+- You MUST perform a Google Search to verify CURRENT, up-to-date real-world facts, recent product/hardware launches, current-year earnings, and modern strategic moves for '${name}' (${symbol}).
+- Ground all findings strictly in the current real-world market context as of ${dateStr}. DO NOT rely on outdated pre-trained cutoff assumptions (e.g. verify the latest generation consoles/hardware, current product lineups, and latest quarter results).
 - DO NOT include conversational filler, pleasantries, or phrases like "Here is...", "Below is...", or "Certainly!".
 - Jump directly into the first markdown header.
 - Maintain a concise, plain-English tone. Avoid unnecessary, confusing financial jargon.
@@ -275,20 +279,22 @@ IMPORTANT DIRECTIVES:
 `;
 
   let prompt = "";
-  let useSearch = false;
+  // Enable Google Search Grounding for all institutional research modules and custom questions
+  const useSearch = true;
 
   if (topic === "summary") {
     prompt = `You are a senior equity research analyst analyzing '${name}' (${symbol}).
+Perform a Google Search to verify their CURRENT core business, modern product lineup, and latest revenue drivers as of ${dateStr}.
 ${commonDirectives}
 
 Provide a structured, concise executive overview using EXACTLY this markdown layout:
 
 ### **Core Business & Revenue Model**
-* **Primary Activities:** [2 sentences on core operations or asset allocation if ETF]
-* **Monetization & Margins:** [1-2 sentences on profit drivers, cash flow, or MER/yield if ETF]
+* **Primary Activities:** [2 sentences on core operations, modern product lines, or asset allocation if ETF]
+* **Monetization & Margins:** [1-2 sentences on current profit drivers, cash flow, or MER/yield if ETF]
 
 ### **Competitive Moat**
-* **Defensible Advantage:** [1-2 sentences on moat: network effects, scale, switching costs, or tax efficiency]
+* **Defensible Advantage:** [1-2 sentences on moat: network effects, scale, proprietary IP/hardware, switching costs, or tax efficiency]
 * **Pricing Power:** [1 sentence on customer stickiness or fee durability]
 
 ### **Target Market & Client Base**
@@ -297,13 +303,10 @@ Provide a structured, concise executive overview using EXACTLY this markdown lay
 ### **Executive Takeaway**
 [1 punchy sentence synthesizing their long-term competitive durability]`;
   } else if (topic === "past_week") {
-    useSearch = true;
-    const { dateStr } = getMarketDateContext();
     prompt = `You are a market analyst explaining why '${name}' (${symbol}) went up or down over the past 7 days (the 7 days leading up to ${dateStr}).
 ${commonDirectives}
-- Today's Date is: ${dateStr}.
 - USE PLAIN, STRAIGHTFORWARD ENGLISH. AVOID CONFUSING WALL STREET JARGON.
-- Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, or broader sector shifts from the past 7 days leading up to ${dateStr}.
+- Perform a Google Search to identify real news, earnings reports, regulatory decisions, political developments, product announcements, or broader sector shifts from the past 7 days leading up to ${dateStr}.
 
 Provide a concise breakdown using EXACTLY this markdown layout:
 
@@ -318,12 +321,13 @@ Provide a concise breakdown using EXACTLY this markdown layout:
 [1 punchy sentence stating whether this past week's price movement is short-term market noise or a meaningful fundamental shift]`;
   } else if (topic === "trajectory") {
     prompt = `You are a strategic financial analyst conducting a 2–5 year trajectory analysis for '${name}' (${symbol}).
+Perform a Google Search to identify their CURRENT upcoming pipeline, next-generation product roadmap (e.g. hardware/software generations), and guidance as of ${dateStr}.
 ${commonDirectives}
 
 Provide a structured, forward-looking roadmap using EXACTLY this markdown layout:
 
 ### **Key Growth Catalysts & Tailwinds (2–5 Years)**
-* **[Catalyst 1 Name]:** [1-2 sentences on specific growth driver e.g. AI infrastructure, rate cycle, or secular inflows]
+* **[Catalyst 1 Name]:** [1-2 sentences on specific growth driver e.g. next-gen hardware/software cycle, secular inflows, or expansion]
 * **[Catalyst 2 Name]:** [1-2 sentences on operational or industry tailwind]
 * **[Catalyst 3 Name]:** [1-2 sentences on valuation re-rating or market expansion]
 
@@ -336,14 +340,15 @@ Provide a structured, forward-looking roadmap using EXACTLY this markdown layout
 * **Rationale:** [2 sentences on optimal investor time horizon and execution approach]`;
   } else if (topic === "risks") {
     prompt = `You are a chief risk officer auditing '${name}' (${symbol}).
+Perform a Google Search to identify their CURRENT real-world threats, component costs, macroeconomic exposure, and regulatory challenges as of ${dateStr}.
 ${commonDirectives}
 
 Provide a structured, objective risk audit using EXACTLY this markdown layout:
 
 ### **Critical Risk Factors & Headwinds**
 * **Macro & Interest Rate Sensitivity:** [1-2 sentences on inflation, discount rate impact, or economic cycle]
-* **Industry & Valuation Pressure:** [1-2 sentences on multiple contraction, tech concentration, or competition]
-* **Operational & Regulatory Exposure:** [1-2 sentences on legal, geopolitical, or operational friction]
+* **Industry & Valuation Pressure:** [1-2 sentences on multiple contraction, product cycle transitions, or competition]
+* **Operational & Regulatory Exposure:** [1-2 sentences on supply chain, memory/component costs, legal, or geopolitical friction]
 * **Currency & Liquidity:** [1 sentence on FX drag, liquidity, or volatility profile]
 
 ### **Vulnerability Assessment**
@@ -351,6 +356,7 @@ Provide a structured, objective risk audit using EXACTLY this markdown layout:
 * **Key Vulnerability:** [1-2 sentences identifying the single catalyst that could most impair the thesis]`;
   } else {
     prompt = `You are an institutional financial analyst analyzing '${name}' (${symbol}).
+Perform a Google Search to ground your answer in verified real-world facts as of ${dateStr}.
 ${commonDirectives}
 
 User Question: "${customQuestion}"
