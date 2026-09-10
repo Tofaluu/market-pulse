@@ -23,6 +23,15 @@ export function App() {
 
       if (event.altKey || event.ctrlKey || event.metaKey) return;
 
+      // Direct Delete / Backspace key on keyboard to delete selected stock
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (store.canDelete.value) {
+          store.deleteSelectedStocks();
+          event.preventDefault();
+          return;
+        }
+      }
+
       const key = event.key.toLowerCase();
       if (!["a", "d", "c", "u", "r"].includes(key)) return;
       if (!event.shiftKey) return;
@@ -41,7 +50,6 @@ export function App() {
   return (
     <main class="flex h-screen w-screen flex-col bg-zinc-950 text-zinc-100 antialiased select-none">
       <Toolbar
-        onAdd={() => store.addRandomStock()}
         onDelete={() => store.deleteSelectedStocks()}
         onUndo={() => store.undo()}
         onRedo={() => store.redo()}

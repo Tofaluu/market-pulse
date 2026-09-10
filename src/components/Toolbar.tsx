@@ -6,13 +6,13 @@ import { AddStockModal } from "./AddStockModal";
 import { AiSettingsModal } from "./AiSettingsModal";
 
 type ToolbarProps = {
-  onAdd: () => void;
+  onAdd?: () => void;
   onDelete: () => void;
   onUndo: () => void;
   onRedo: () => void;
 };
 
-export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
+export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const canSingle = store.hasSingleSelection.value;
@@ -93,8 +93,8 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
-          {/* Search & Add Stock Dialog Trigger */}
-          <div class="flex items-center gap-1">
+          {/* Add Stock & Delete Action Buttons */}
+          <div class="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
@@ -107,31 +107,25 @@ export function Toolbar({ onAdd, onDelete, onUndo, onRedo }: ToolbarProps) {
               </svg>
               <span>Add Stock</span>
             </button>
+
             <button
               type="button"
-              onClick={onAdd}
-              disabled={!store.canAdd.value}
-              title="Add random stock (Shift+A)"
-              class="flex h-7 items-center rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-700"
+              onClick={onDelete}
+              disabled={!store.canDelete.value}
+              title="Delete selected stocks (Delete key)"
+              class="flex h-7 items-center gap-1.5 rounded-lg border border-rose-600/40 bg-rose-600/15 px-3 text-xs font-semibold text-rose-300 shadow-sm transition hover:bg-rose-600/25 hover:text-white disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-zinc-900 disabled:text-zinc-600"
             >
-              🎲
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Delete</span>
+              {selectedCount > 1 && (
+                <span class="rounded bg-rose-500/30 px-1.5 py-0.2 text-[10px] font-bold text-rose-200">
+                  {selectedCount}
+                </span>
+              )}
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={!store.canDelete.value}
-            title="Delete selected stocks (Shift+D or Delete)"
-            class="flex h-7 items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs font-medium text-zinc-300 transition hover:border-rose-900/50 hover:bg-rose-950/30 hover:text-rose-400 disabled:cursor-not-allowed disabled:border-zinc-850 disabled:bg-zinc-950/40 disabled:text-zinc-600"
-          >
-            <span>Delete</span>
-            {selectedCount > 0 && (
-              <span class="rounded bg-rose-500/20 px-1 py-0.2 text-[10px] font-semibold text-rose-300">
-                {selectedCount}
-              </span>
-            )}
-          </button>
 
           <div class="h-4 w-[1px] bg-zinc-800" />
 
