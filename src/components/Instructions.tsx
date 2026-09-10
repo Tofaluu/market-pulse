@@ -1,5 +1,5 @@
 // Instruction and multi-select overview panels.
-import { useState } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { MULTI_SELECT_TEXT, WELCOME_TEXT } from "../constants";
 import { formatPercentChange, formatPrice } from "../format";
 import { clearGeminiApiKey, getGeminiApiKey, setGeminiApiKey } from "../services/gemini";
@@ -10,6 +10,42 @@ type InstructionsProps = {
 };
 
 export function Instructions({ multi }: InstructionsProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const container = containerRef.current;
+      const card = cardRef.current;
+      if (!container || !card) return;
+
+      const availH = container.clientHeight - 32;
+      const availW = container.clientWidth - 32;
+      const cardH = card.offsetHeight;
+      const cardW = card.offsetWidth;
+
+      if (cardH > 0 && cardW > 0 && availH > 0 && availW > 0) {
+        const factor = Math.min(1, availH / cardH, availW / cardW);
+        setScale(Math.max(0.35, factor));
+      }
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+      observer = new ResizeObserver(updateScale);
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      observer?.disconnect();
+    };
+  }, [store.stocks.value.length]);
+
   const [apiKey, setApiKey] = useState(getGeminiApiKey());
   const [isSaved, setIsSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -100,8 +136,19 @@ export function Instructions({ multi }: InstructionsProps) {
   }
 
   return (
-    <div class="flex h-full flex-col items-center justify-center p-8">
-      <div class="max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur">
+    <div
+      ref={containerRef}
+      class="flex h-full w-full items-center justify-center overflow-hidden p-4 sm:p-6"
+    >
+      <div
+        ref={cardRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+          transition: "transform 0.05s ease-out",
+        }}
+        class="w-full max-w-lg shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur"
+      >
         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
