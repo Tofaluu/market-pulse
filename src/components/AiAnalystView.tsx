@@ -46,7 +46,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           price: result.price,
           change: result.change ?? 0,
           percentChange: result.percentChange ?? 0,
-          sourceText: "Verified live via Gemini AI & Google Search",
+          sourceText: result.sourceText || "Verified live via Google Finance & Search",
           timestamp: new Date().toLocaleTimeString(),
         });
       } else {
@@ -125,17 +125,20 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               ) : (
                 <>
                   <span class="text-3xl font-extrabold tracking-tight text-white tabular-nums">
-                    {formatPrice(stock.price)}
+                    {formatPrice(liveResult ? liveResult.price : stock.price)}
                   </span>
                   <div
                     class={`flex items-center gap-1 text-sm font-semibold tabular-nums ${
-                      stock.change >= 0 ? "text-emerald-400" : "text-rose-400"
+                      (liveResult ? liveResult.change ?? stock.change : stock.change) >= 0
+                        ? "text-emerald-400"
+                        : "text-rose-400"
                     }`}
                   >
                     <span>
-                      {formatSignedChange(stock.change)} ({formatPercentChange(stock.percentChange)})
+                      {formatSignedChange(liveResult ? liveResult.change ?? stock.change : stock.change)} (
+                      {formatPercentChange(liveResult ? liveResult.percentChange ?? stock.percentChange : stock.percentChange)})
                     </span>
-                    <span>{stock.change >= 0 ? "↑" : "↓"}</span>
+                    <span>{(liveResult ? liveResult.change ?? stock.change : stock.change) >= 0 ? "↑" : "↓"}</span>
                   </div>
                   {liveResult && (
                     <span class="text-xs text-emerald-400">
