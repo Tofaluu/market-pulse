@@ -31,9 +31,6 @@ export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
               </svg>
             </div>
             <span class="text-base font-bold tracking-tight text-white">{APP_TITLE}</span>
-            <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
-              PRO
-            </span>
           </div>
 
           <div class="h-4 w-[1px] bg-zinc-800" />
@@ -157,7 +154,9 @@ export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
                   : "text-zinc-400 hover:text-violet-300 disabled:cursor-not-allowed disabled:text-zinc-650"
               }`}
             >
-              <span>🤖</span>
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+              </svg>
               <span>AI Analyst</span>
             </button>
           </div>
@@ -169,7 +168,10 @@ export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
             title="Configure Gemini API Key"
             class="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-400 hover:border-zinc-700 hover:text-white transition"
           >
-            ⚙️
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
           </button>
         </div>
       </header>

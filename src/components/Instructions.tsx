@@ -190,8 +190,8 @@ export function Instructions({ multi }: InstructionsProps) {
         <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/20 p-5">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300 text-sm font-bold">
-                🔑
+              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20 text-violet-300">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
               </span>
               <span class="text-sm font-bold uppercase tracking-wider text-violet-300">
                 Gemini API Key (Recommended)
@@ -232,7 +232,11 @@ export function Instructions({ multi }: InstructionsProps) {
                     class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200"
                     title={showKey ? "Hide key" : "Show key"}
                   >
-                    {showKey ? "🙈" : "👁️"}
+                    {showKey ? (
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    ) : (
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
                   </button>
                 )}
               </div>

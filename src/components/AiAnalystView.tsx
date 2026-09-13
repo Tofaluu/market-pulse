@@ -169,7 +169,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
                   class="h-6 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition shadow-sm"
                   title="Return to interactive financial chart"
                 >
-                  <span>📈</span>
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                   <span>Back to Interactive Chart</span>
                 </button>
               </div>
@@ -184,7 +184,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
               title="Configure Gemini API Key"
               class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition shadow-sm"
             >
-              <span>⚙️</span>
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
               <span>AI Settings</span>
             </button>
           </div>
@@ -221,7 +221,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             }`}
           >
             <div class="flex items-center gap-2">
-              <span class="text-lg">🏢</span>
+              <svg class="h-5 w-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
               <span class="text-xs font-bold text-white">Company & Moat</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
@@ -240,7 +240,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             }`}
           >
             <div class="flex items-center gap-2">
-              <span class="text-lg">📰</span>
+              <svg class="h-5 w-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
               <span class="text-xs font-bold text-white">Past Week Drivers</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
@@ -259,7 +259,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             }`}
           >
             <div class="flex items-center gap-2">
-              <span class="text-lg">🚀</span>
+              <svg class="h-5 w-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 3.82-13.43c2.35-3.3 6.94-3.3 6.94-3.3s.06 4.67-3.15 7.15A22 22 0 0 1 12 15Z"/><path d="M9 11 4.5 6.5"/><path d="m13 15 4.5 4.5"/><path d="m14 10-1-1"/></svg>
               <span class="text-xs font-bold text-white">Future Trajectory</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
@@ -278,7 +278,7 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             }`}
           >
             <div class="flex items-center gap-2">
-              <span class="text-lg">⚠️</span>
+              <svg class="h-5 w-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
               <span class="text-xs font-bold text-white">Key Risks</span>
             </div>
             <p class="mt-1.5 text-[11px] text-zinc-400">
@@ -358,7 +358,11 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
             </div>
           ) : (
             <div class="flex flex-col items-center justify-center py-14 text-center text-zinc-500">
-              <div class="text-3xl mb-2">🤖</div>
+              <div class="mb-4 text-zinc-600">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+              </div>
               <p class="text-xs">
                 Select one of the research modules above or click <strong>Query Real-World Live Price</strong> to begin.
               </p>

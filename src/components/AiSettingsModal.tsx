@@ -98,8 +98,14 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
             </span>
           </div>
 
-          <div class="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-[11px] text-zinc-400">
-            🔒 <strong>Private & Secure:</strong> Your API key is stored strictly in your browser's local storage and is sent directly from your device to Google's API. It is never stored on any server.
+          <div class="flex gap-2 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-[11px] text-zinc-400">
+            <svg class="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <div>
+              <strong>Private & Secure:</strong> Your API key is stored strictly in your browser's local storage and is sent directly from your device to Google's API. It is never stored on any server.
+            </div>
           </div>
 
           <div class="border-t border-zinc-800/80 pt-3">
