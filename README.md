@@ -1,4 +1,4 @@
-# MarketPulse 📈
+# TrackMarket 📈
 
 <p align="center">
   <strong>A high-performance, real-time financial market analytics dashboard and equity research terminal.</strong>
@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://tofaluu.github.io/market-pulse/">
+  <a href="https://tofaluu.github.io/track-market/">
     <img src="https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-10b981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo" />
   </a>
 </p>
@@ -22,16 +22,16 @@
   <img src="https://img.shields.io/badge/Markets-NYSE_•_NASDAQ_•_TSX-amber?style=flat-square" alt="Markets Supported" />
 </p>
 
-> 🚀 **Live Web Application:** [https://tofaluu.github.io/market-pulse/](https://tofaluu.github.io/market-pulse/)  
+> 🚀 **Live Web Application:** [https://tofaluu.github.io/track-market/](https://tofaluu.github.io/track-market/)  
 > *(Runs entirely in your browser — zero installation or setup required)*
 
 ---
 
 ## 🌟 Overview
 
-**MarketPulse** is an institutional-grade, client-side financial analytics terminal designed for lightning-fast tracking, visualization, and equity research across North American stock exchanges (NYSE, NASDAQ, and TSX).
+**TrackMarket** is an institutional-grade, client-side financial analytics terminal designed for lightning-fast tracking, visualization, and equity research across North American stock exchanges (NYSE, NASDAQ, and TSX).
 
-Combining **Preact Signals** for direct fine-grained DOM updates with **Google Gemini 3.6 Flash** and **Google Search Grounding**, MarketPulse enables users to fetch real-world market prices, explore historical valuations, track authentic exchange trading sessions, and generate forward-looking institutional equity research reports in real time.
+Combining **Preact Signals** for direct fine-grained DOM updates with **Google Gemini 3.6 Flash** and **Google Search Grounding**, TrackMarket enables users to fetch real-world market prices, explore historical valuations, track authentic exchange trading sessions, and generate forward-looking institutional equity research reports in real time.
 
 ---
 
@@ -87,7 +87,7 @@ Combining **Preact Signals** for direct fine-grained DOM updates with **Google G
 
 ## ⌨️ Keyboard Shortcuts
 
-MarketPulse is built for keyboard-first efficiency:
+TrackMarket is built for keyboard-first efficiency:
 
 | Shortcut | Action |
 | :--- | :--- |
@@ -104,7 +104,7 @@ MarketPulse is built for keyboard-first efficiency:
 ## 🛠️ Architecture & Tech Stack
 
 ```
-market-pulse/
+track-market/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # Automated GitHub Actions Pages deployment
@@ -151,8 +151,8 @@ market-pulse/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Tofaluu/market-pulse.git
-   cd market-pulse
+   git clone https://github.com/Tofaluu/track-market.git
+   cd track-market
    ```
 
 2. **Install dependencies:**
@@ -177,7 +177,7 @@ market-pulse/
 
 To enable live Google Search price lookups and AI equity research:
 1. Obtain a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. In MarketPulse, click the **⚙️** (Settings) button in the top right.
+2. In TrackMarket, click the **⚙️** (Settings) button in the top right.
 3. Paste your API key and click **Save Key**.
 
 > [!NOTE]
@@ -187,7 +187,7 @@ To enable live Google Search price lookups and AI equity research:
 
 ## 🌐 Deployment & Custom Domains
 
-MarketPulse is built as a serverless single-page application (SPA) preconfigured for automated deployment on **GitHub Pages**:
+TrackMarket is built as a serverless single-page application (SPA) preconfigured for automated deployment on **GitHub Pages**:
 
 - **Automated CI/CD**: Pushing to `main` triggers `.github/workflows/deploy.yml`, which compiles the TypeScript assets and deploys the static bundle to GitHub Pages.
 - **Custom Domains**: Configured with relative base paths (`base: "./"`), allowing you to point any custom apex domain or subdomain via CNAME without broken asset paths.

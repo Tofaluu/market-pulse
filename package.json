@@ -1,5 +1,5 @@
 {
-  "name": "market-pulse",
+  "name": "track-market",
   "version": "1.0.0",
   "description": "High-performance real-time market analytics and stock tracking dashboard built with Preact, Signals, and Tailwind CSS",
   "author": "Thomas Liu <samohtliu@gmail.com>",

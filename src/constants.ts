@@ -1,10 +1,10 @@
 // Shared constants and static instruction text used by the UI.
 export const MAX_STOCKS = 50;
 
-export const APP_TITLE = "MarketPulse";
+export const APP_TITLE = "TrackMarket";
 
 export const WELCOME_TEXT = {
-  title: "Welcome to MarketPulse",
+  title: "Welcome to TrackMarket",
   subtitle: "Institutional-grade market tracker & equity research terminal.",
   supported: [
     "Live Market Feeds - Real-time stock prices, automatic 20-second updates during market hours, and instant sync on add.",
