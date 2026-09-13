@@ -196,7 +196,10 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
           {errorMsg && (
           <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-4 text-xs text-rose-300">
             <div class="flex items-center justify-between">
-              <span>⚠️ {errorMsg}</span>
+              <span class="flex items-center gap-1.5">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                {errorMsg}
+              </span>
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
@@ -348,7 +351,8 @@ export function AiAnalystView({ stock }: AiAnalystViewProps) {
                   onClick={() => navigator.clipboard.writeText(analysisText)}
                   class="flex items-center gap-1.5 rounded-lg border border-zinc-750 bg-zinc-850 px-2.5 py-1 text-xs text-zinc-300 hover:border-zinc-700 hover:text-white transition"
                 >
-                  📋 Copy Text
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  <span>Copy Text</span>
                 </button>
               </div>
               <div

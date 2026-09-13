@@ -45,9 +45,9 @@ export function StockList() {
             <button
               type="button"
               onClick={() => store.setSearchQuery("")}
-              class="absolute right-2 top-1.5 text-xs text-zinc-500 hover:text-zinc-300"
+              class="absolute right-2 top-2 text-zinc-500 hover:text-zinc-300 transition"
             >
-              ✕
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           )}
         </div>

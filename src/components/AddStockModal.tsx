@@ -132,9 +132,9 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
             <button
               type="button"
               onClick={onClose}
-              class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+              class="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition"
             >
-              ✕
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
 
@@ -160,9 +160,9 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                class="absolute right-3.5 top-2.5 text-xs text-zinc-500 hover:text-zinc-300"
+                class="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300 transition"
               >
-                ✕
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             )}
           </div>
@@ -224,7 +224,7 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
                     </>
                   ) : (
                     <>
-                      <span>🔍</span>
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                       <span>Find & Add</span>
                     </>
                   )}
@@ -232,8 +232,9 @@ export function AddStockModal({ isOpen, onClose }: AddStockModalProps) {
               </div>
 
               {aiSearchError && (
-                <div class="mt-2.5 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-300">
-                  ⚠️ {aiSearchError}
+                <div class="mt-2.5 flex items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-300">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                  <span>{aiSearchError}</span>
                 </div>
               )}
             </div>

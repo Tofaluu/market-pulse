@@ -62,9 +62,9 @@ export function AiSettingsModal({ isOpen, onClose }: AiSettingsModalProps) {
           <button
             type="button"
             onClick={onClose}
-            class="text-zinc-500 hover:text-zinc-300"
+            class="text-zinc-500 hover:text-zinc-300 transition"
           >
-            ✕
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
         </div>
 

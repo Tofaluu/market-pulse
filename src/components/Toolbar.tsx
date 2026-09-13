@@ -75,7 +75,7 @@ export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
               title="Undo last action (Shift+U)"
               class="flex h-7 w-8 items-center justify-center rounded text-xs font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:text-zinc-600 disabled:hover:bg-transparent"
             >
-              ↩
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
             </button>
             <button
               type="button"
@@ -84,7 +84,7 @@ export function Toolbar({ onDelete, onUndo, onRedo }: ToolbarProps) {
               title="Redo action (Shift+R)"
               class="flex h-7 w-8 items-center justify-center rounded text-xs font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:text-zinc-600 disabled:hover:bg-transparent"
             >
-              ↪
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
             </button>
           </div>
 
